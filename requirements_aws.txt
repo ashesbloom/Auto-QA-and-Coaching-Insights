@@ -1,0 +1,30 @@
+# Battery Smart Auto-QA System - AWS Requirements
+# Install with: pip install -r requirements_aws.txt
+
+# Core Flask dependencies
+flask>=2.3.0
+flask-socketio>=5.3.0
+python-socketio>=5.10.0
+python-dotenv>=1.0.0
+
+# AWS SDK
+boto3>=1.34.0
+botocore>=1.34.0
+
+# Text-to-Speech (fallback)
+edge-tts>=6.1.0
+
+# Google Gemini (fallback LLM)
+google-generativeai>=0.3.0
+
+# Groq (fast Llama inference - preferred for voice)
+groq>=0.4.0
+
+# Async support
+eventlet>=0.33.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Optional: Local Whisper STT
+# openai-whisper>=20231117

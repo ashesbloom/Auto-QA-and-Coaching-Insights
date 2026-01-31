@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battery Smart - Customer Portal</title>
+    <link rel="stylesheet" href="/customer/static/customer.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Main Dashboard Container (shown directly since auth is handled by login page) -->
+    <div id="dashboard-container" class="dashboard-container">
+
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">⚡</span>
+                    <span class="logo-text">Battery<span class="accent">Smart</span></span>
+                </div>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-tab="home">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-text">Home</span>
+                </li>
+                <li class="nav-item" data-tab="chat">
+                    <span class="nav-icon">💬</span>
+                    <span class="nav-text">Chat Support</span>
+                </li>
+                <li class="nav-item" data-tab="schedule">
+                    <span class="nav-icon">📞</span>
+                    <span class="nav-text">Schedule Call</span>
+                </li>
+                <li class="nav-item" data-tab="logs">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Call Logs</span>
+                </li>
+                <li class="nav-item" data-tab="tickets">
+                    <span class="nav-icon">🎫</span>
+                    <span class="nav-text">My Tickets</span>
+                </li>
+                <li class="nav-item" data-tab="notifications">
+                    <span class="nav-icon">🔔</span>
+                    <span class="nav-text">Notifications</span>
+                    <span class="badge" id="notif-badge">0</span>
+                </li>
+                <li class="nav-item" data-tab="profile">
+                    <span class="nav-icon">👤</span>
+                    <span class="nav-text">Profile</span>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <span>🚪</span> Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="welcome-text">
+                    <h2 id="page-title">Welcome Back!</h2>
+                    <p id="user-greeting">Hello, User</p>
+                </div>
+                <div class="header-actions">
+                    <div class="notification-bell" onclick="switchTab('notifications')">
+                        <span>🔔</span>
+                        <span class="notif-dot" id="notif-dot"></span>
+                    </div>
+                    <div class="user-avatar" onclick="switchTab('profile')">
+                        <span id="user-initials">U</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Home Tab -->
+                <section id="tab-home" class="tab-section active">
+                    <div class="home-grid">
+                        <div class="quick-action-card" onclick="switchTab('chat')">
+                            <div class="card-icon chat-icon">💬</div>
+                            <h3>Chat with Us</h3>
+                            <p>Get instant help from our AI assistant</p>
+                        </div>
+                        <div class="quick-action-card" onclick="switchTab('schedule')">
+                            <div class="card-icon call-icon">📞</div>
+                            <h3>Schedule a Call</h3>
+                            <p>Book a call with our support team</p>
+                        </div>
+                        <div class="quick-action-card" onclick="switchTab('tickets')">
+                            <div class="card-icon ticket-icon">🎫</div>
+                            <h3>My Tickets</h3>
+                            <p>Track your support requests</p>
+                        </div>
+                        <div class="quick-action-card" onclick="switchTab('logs')">
+                            <div class="card-icon logs-icon">📋</div>
+                            <h3>Call History</h3>
+                            <p>View past interactions</p>
+                        </div>
+                    </div>
+
+                    <div class="recent-activity">
+                        <h3>Recent Activity</h3>
+                        <div id="recent-activity-list" class="activity-list">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Chat Tab -->
+                <section id="tab-chat" class="tab-section">
+                    <div class="chat-container">
+                        <div class="chat-header">
+                            <div class="chat-avatar">🤖</div>
+                            <div class="chat-info">
+                                <h3>Battery Smart Assistant</h3>
+                                <span class="status online">Online</span>
+                            </div>
+                        </div>
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message bot">
+                                <div class="message-content">
+                                    Hello! 👋 Welcome to Battery Smart support. How can I help you today?
+                                </div>
+                                <span class="message-time">Now</span>
+                            </div>
+                        </div>
+                        <div class="quick-replies">
+                            <button class="quick-reply" onclick="sendQuickReply('Battery issue')">🔋 Battery
+                                Issue</button>
+                            <button class="quick-reply" onclick="sendQuickReply('Billing question')">💳 Billing</button>
+                            <button class="quick-reply" onclick="sendQuickReply('Find station')">📍 Find
+                                Station</button>
+                            <button class="quick-reply" onclick="sendQuickReply('Schedule a call')">📞 Schedule
+                                Call</button>
+                        </div>
+                        <div class="chat-input-container">
+                            <input type="text" id="chat-input" placeholder="Type your message..."
+                                onkeypress="handleChatKeypress(event)">
+                            <button class="send-btn" onclick="sendMessage()">
+                                <span>➤</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Schedule Call Tab -->
+                <section id="tab-schedule" class="tab-section">
+                    <div class="schedule-container">
+                        <!-- Voice Call Now Section -->
+                        <div class="voice-call-card">
+                            <div class="voice-call-header">
+                                <div class="voice-icon-pulse">🎙️</div>
+                                <div>
+                                    <h3>Call Agent Now</h3>
+                                    <p>Talk to our AI agent instantly via browser</p>
+                                </div>
+                            </div>
+
+                            <div id="voice-call-form" class="voice-call-form">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Your Name</label>
+                                        <input type="text" id="voice-name" placeholder="Enter your name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Mobile Number</label>
+                                        <input type="tel" id="voice-phone" placeholder="10-digit mobile"
+                                            pattern="[0-9]{10}" required>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-voice-call" id="start-voice-call"
+                                    onclick="startVoiceCall()">
+                                    <span class="btn-icon">📞</span>
+                                    <span>Start Voice Call</span>
+                                </button>
+                            </div>
+
+                            <!-- Voice Call Active Interface (Hidden by default) -->
+                            <div id="voice-call-active" class="voice-call-active hidden">
+                                <div class="voice-agent-avatar">
+                                    <div class="avatar-circle" id="voice-avatar">
+                                        <span>🎧</span>
+                                    </div>
+                                    <div class="agent-details">
+                                        <h4>Priya</h4>
+                                        <span class="agent-status">AI Support Agent</span>
+                                    </div>
+                                </div>
+
+                                <div class="call-timer-display">
+                                    <span class="timer-icon">🔴</span>
+                                    <span id="voice-timer">00:00</span>
+                                </div>
+
+                                <div class="voice-transcript" id="voice-transcript">
+                                    <!-- Transcript entries will appear here -->
+                                </div>
+
+                                <div class="voice-controls">
+                                    <button class="voice-control-btn mute" id="voice-mute" onclick="toggleVoiceMute()">
+                                        <span>🎤</span>
+                                        <span>Mute</span>
+                                    </button>
+                                    <button class="voice-control-btn end-call" onclick="endVoiceCall()">
+                                        <span>📴</span>
+                                        <span>End Call</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- Call Logs Tab -->
+                <section id="tab-logs" class="tab-section">
+                    <div class="logs-container">
+                        <div class="logs-header">
+                            <h3>📋 Call & Chat History</h3>
+                            <div class="logs-filters">
+                                <select id="log-filter" onchange="filterLogs()">
+                                    <option value="all">All Types</option>
+                                    <option value="call">Calls Only</option>
+                                    <option value="chat">Chats Only</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="call-logs-list" class="logs-list">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tickets Tab -->
+                <section id="tab-tickets" class="tab-section">
+                    <div class="tickets-container">
+                        <div class="tickets-header">
+                            <h3>🎫 My Tickets</h3>
+                            <button class="btn-secondary" onclick="showCreateTicketModal()">+ New Ticket</button>
+                        </div>
+                        <div id="tickets-list" class="tickets-list">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Notifications Tab -->
+                <section id="tab-notifications" class="tab-section">
+                    <div class="notifications-container">
+                        <div class="notifications-header">
+                            <h3>🔔 Notifications</h3>
+                            <button class="btn-text" onclick="markAllRead()">Mark all as read</button>
+                        </div>
+                        <div id="notifications-list" class="notifications-list">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Profile Tab -->
+                <section id="tab-profile" class="tab-section">
+                    <div class="profile-container">
+                        <div class="profile-card">
+                            <div class="profile-header">
+                                <div class="profile-avatar" id="profile-avatar">U</div>
+                                <div class="profile-info">
+                                    <h2 id="profile-name">User Name</h2>
+                                    <p id="profile-email">user@email.com</p>
+                                </div>
+                            </div>
+                            <form id="profile-form" onsubmit="handleProfileUpdate(event)">
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" id="profile-name-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Phone Number</label>
+                                    <input type="tel" id="profile-phone-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>City</label>
+                                    <input type="text" id="profile-city-input">
+                                </div>
+                                <div class="profile-stats">
+                                    <div class="stat">
+                                        <span class="stat-value" id="stat-plan">Pro</span>
+                                        <span class="stat-label">Current Plan</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-value" id="stat-since">Jan 2024</span>
+                                        <span class="stat-label">Member Since</span>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-primary">Save Changes</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⭐ Rate Your Experience</h3>
+                <button class="modal-close" onclick="closeFeedbackModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="rating-stars" id="rating-stars">
+                    <span class="star" data-rating="1">★</span>
+                    <span class="star" data-rating="2">★</span>
+                    <span class="star" data-rating="3">★</span>
+                    <span class="star" data-rating="4">★</span>
+                    <span class="star" data-rating="5">★</span>
+                </div>
+                <div class="feedback-tags">
+                    <button class="tag" data-tag="helpful">👍 Helpful</button>
+                    <button class="tag" data-tag="quick">⚡ Quick</button>
+                    <button class="tag" data-tag="friendly">😊 Friendly</button>
+                    <button class="tag" data-tag="professional">💼 Professional</button>
+                    <button class="tag" data-tag="needs_improvement">📝 Needs Improvement</button>
+                </div>
+                <textarea id="feedback-comment" placeholder="Additional comments (optional)..."></textarea>
+                <button class="btn-primary" onclick="submitFeedback()">Submit Feedback</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Ticket Modal -->
+    <div id="ticket-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎫 Create New Ticket</h3>
+                <button class="modal-close" onclick="closeTicketModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-ticket-form" onsubmit="handleCreateTicket(event)">
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" id="ticket-subject" required placeholder="Brief description of your issue">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="ticket-category" required>
+                            <option value="battery">Battery Issues</option>
+                            <option value="billing">Billing & Payment</option>
+                            <option value="subscription">Subscription</option>
+                            <option value="station">Station Issues</option>
+                            <option value="app">App Problems</option>
+                            <option value="general">General Inquiry</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="ticket-priority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="ticket-description" required placeholder="Describe your issue in detail..."
+                            rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Create Ticket</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call Simulation Modal -->
+    <div id="call-modal" class="modal hidden">
+        <div class="modal-content call-simulation">
+            <div class="call-header">
+                <div class="call-avatar">🤖</div>
+                <h3>AI Support Agent</h3>
+                <p id="call-status">Connecting...</p>
+            </div>
+            <div class="call-timer" id="call-timer">00:00</div>
+            <div class="call-transcript" id="call-transcript-live">
+                <!-- Live transcript -->
+            </div>
+            <div class="call-actions">
+                <button class="call-end-btn" onclick="endCall()">
+                    <span>📞</span> End Call
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transcript Modal -->
+    <div id="transcript-modal" class="modal hidden">
+        <div class="modal-content transcript-modal">
+            <div class="modal-header">
+                <h3>📝 Call Transcript</h3>
+                <button class="modal-close" onclick="closeTranscriptModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="transcript-content" class="transcript-content">
+                    <!-- Transcript content -->
+                </div>
+                <button class="btn-secondary" onclick="downloadTranscript()">📥 Download Transcript</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <span id="toast-message"></span>
+    </div>
+
+    <!-- Audio element for voice playback -->
+    <audio id="voice-audio-player" style="display: none;"></audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/customer/static/customer.js"></script>
+</body>
+
+</html>

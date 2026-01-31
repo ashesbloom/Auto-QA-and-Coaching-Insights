@@ -1,0 +1,36 @@
+{
+  "session_id": "3ce3e228",
+  "agent_name": "Priya",
+  "start_time": "2026-01-31T21:00:59.376841",
+  "end_time": "2026-01-31T21:01:42.447719",
+  "duration_seconds": 43,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-01-31T21:00:59.376856"
+    },
+    {
+      "speaker": "customer",
+      "text": "hello how are you doing have a problem with my battery",
+      "timestamp": "2026-01-31T21:01:21.863632"
+    },
+    {
+      "speaker": "agent",
+      "text": "Hello! Welcome to Battery Smart. How can I help you today?",
+      "timestamp": "2026-01-31T21:01:22.649790"
+    },
+    {
+      "speaker": "customer",
+      "text": "how can I fix it",
+      "timestamp": "2026-01-31T21:01:38.638089"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?",
+      "timestamp": "2026-01-31T21:01:38.792076"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: hello how are you doing have a problem with my battery\n\nAgent: Hello! Welcome to Battery Smart. How can I help you today?\n\nCustomer: how can I fix it\n\nAgent: I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?",
+  "llm_provider": "gemini"
+}

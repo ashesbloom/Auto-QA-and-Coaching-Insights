@@ -1,0 +1,36 @@
+{
+  "session_id": "a1e3f5b9",
+  "agent_name": "Priya",
+  "start_time": "2026-02-01T01:09:58.243731",
+  "end_time": "2026-02-01T01:11:32.440789",
+  "duration_seconds": 94,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-02-01T01:09:58.243778"
+    },
+    {
+      "speaker": "customer",
+      "text": "can you tell me the warranty of my battery",
+      "timestamp": "2026-02-01T01:10:12.296797"
+    },
+    {
+      "speaker": "agent",
+      "text": "I understand you're looking for warranty information on your battery. Our batteries typically come with a comprehensive warranty that covers manufacturing defects for a certain period. However, for the most accurate and up-to-date information specific to your battery, I would recommend checking your purchase documents or the Battery Smart app. If you need further assistance or have any other questions, feel free to ask! Is there anything else I can help you with?",
+      "timestamp": "2026-02-01T01:10:13.057043"
+    },
+    {
+      "speaker": "customer",
+      "text": "what if I use battery",
+      "timestamp": "2026-02-01T01:10:56.197791"
+    },
+    {
+      "speaker": "agent",
+      "text": "I see you're concerned about the warranty if you use the battery. Don't worry, using the battery as intended does not void the warranty. Our warranty covers normal usage, and you can continue to use your battery without worrying about losing your warranty coverage. However, any damage caused by misuse or accidents might not be covered. If you have any specific questions about what is and isn't covered, I'd be happy to help clarify. Is there anything else I can help you with?",
+      "timestamp": "2026-02-01T01:10:56.877459"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: can you tell me the warranty of my battery\n\nAgent: I understand you're looking for warranty information on your battery. Our batteries typically come with a comprehensive warranty that covers manufacturing defects for a certain period. However, for the most accurate and up-to-date information specific to your battery, I would recommend checking your purchase documents or the Battery Smart app. If you need further assistance or have any other questions, feel free to ask! Is there anything else I can help you with?\n\nCustomer: what if I use battery\n\nAgent: I see you're concerned about the warranty if you use the battery. Don't worry, using the battery as intended does not void the warranty. Our warranty covers normal usage, and you can continue to use your battery without worrying about losing your warranty coverage. However, any damage caused by misuse or accidents might not be covered. If you have any specific questions about what is and isn't covered, I'd be happy to help clarify. Is there anything else I can help you with?",
+  "llm_provider": "groq"
+}

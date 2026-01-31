@@ -1,0 +1,16 @@
+{
+  "session_id": "13647e9d",
+  "agent_name": "Priya",
+  "start_time": "2026-02-01T01:38:18.881232",
+  "end_time": "2026-02-01T01:38:49.489617",
+  "duration_seconds": 31,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-02-01T01:38:18.881267"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+  "llm_provider": "groq"
+}

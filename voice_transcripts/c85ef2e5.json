@@ -1,0 +1,35 @@
+{
+  "session_id": "c85ef2e5",
+  "agent_name": "Priya",
+  "start_time": "2026-01-31T16:56:17.251020",
+  "end_time": "2026-01-31T16:56:57.542299",
+  "duration_seconds": 40,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-01-31T16:56:17.251020"
+    },
+    {
+      "speaker": "customer",
+      "text": "I can't find any battery smart station near me",
+      "timestamp": "2026-01-31T16:56:31.505644"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'll help you find an available swap station. Can you tell me your current location or the name of the station you're at?",
+      "timestamp": "2026-01-31T16:56:31.828539"
+    },
+    {
+      "speaker": "customer",
+      "text": "uncle 56",
+      "timestamp": "2026-01-31T16:56:46.994869"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'll be happy to help you with that. Could you please provide your registered phone number so I can access your account?",
+      "timestamp": "2026-01-31T16:56:47.179859"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: I can't find any battery smart station near me\n\nAgent: I'll help you find an available swap station. Can you tell me your current location or the name of the station you're at?\n\nCustomer: uncle 56\n\nAgent: I'll be happy to help you with that. Could you please provide your registered phone number so I can access your account?"
+}

@@ -1,0 +1,15 @@
+{
+  "session_id": "a56f1346",
+  "agent_name": "Priya",
+  "start_time": "2026-01-31T18:18:58.796784",
+  "end_time": "2026-01-31T18:19:19.651283",
+  "duration_seconds": 21,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-01-31T18:18:58.796796"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+}

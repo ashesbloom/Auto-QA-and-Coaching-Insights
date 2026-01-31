@@ -1,0 +1,194 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Battery Smart Auto-QA System
+  Serverless components for async call quality analysis
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+  
+  TranscriptsBucketName:
+    Type: String
+    Default: battery-smart-transcripts
+  
+  BedrockModelId:
+    Type: String
+    Default: anthropic.claude-3-haiku-20240307-v1:0
+
+Globals:
+  Function:
+    Timeout: 300
+    Runtime: python3.11
+    MemorySize: 256
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref Environment
+        BEDROCK_MODEL_ID: !Ref BedrockModelId
+        DYNAMODB_TABLE: !Ref CallQAResultsTable
+        SNS_TOPIC_ARN: !Ref SupervisorAlertsTopic
+
+Resources:
+  # =============================================================================
+  # S3 BUCKETS
+  # =============================================================================
+  
+  TranscriptsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${TranscriptsBucketName}-${Environment}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST]
+            AllowedOrigins: ['*']
+            MaxAge: 3600
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveOldRecordings
+            Status: Enabled
+            Prefix: raw_recordings/
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: GLACIER
+      Tags:
+        - Key: Project
+          Value: BatterySmart
+  
+  # =============================================================================
+  # DYNAMODB TABLES
+  # =============================================================================
+  
+  CallQAResultsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub BatterySmart_CallQA_Results_${Environment}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: call_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+        - AttributeName: agent_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: call_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: agent-index
+          KeySchema:
+            - AttributeName: agent_id
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Project
+          Value: BatterySmart
+  
+  # =============================================================================
+  # SNS TOPICS
+  # =============================================================================
+  
+  SupervisorAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub BatterySmart_SupervisorAlerts_${Environment}
+      DisplayName: Battery Smart QA Alerts
+      Tags:
+        - Key: Project
+          Value: BatterySmart
+  
+  # =============================================================================
+  # LAMBDA FUNCTIONS
+  # =============================================================================
+  
+  # Function triggered when audio recording is uploaded to S3
+  StartQAFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub BatterySmart_StartQA_${Environment}
+      Handler: lambda_start_qa.handler
+      CodeUri: lambda/
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref TranscriptsBucket
+        - Statement:
+            - Effect: Allow
+              Action:
+                - transcribe:StartTranscriptionJob
+                - transcribe:GetTranscriptionJob
+              Resource: '*'
+      Events:
+        S3Recording:
+          Type: S3
+          Properties:
+            Bucket: !Ref TranscriptsBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: raw_recordings/
+  
+  # Function triggered when transcription completes
+  AnalyzeTranscriptFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub BatterySmart_AnalyzeTranscript_${Environment}
+      Handler: lambda_analyze.handler
+      CodeUri: lambda/
+      MemorySize: 512
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref TranscriptsBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CallQAResultsTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt SupervisorAlertsTopic.TopicName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource: '*'
+      Events:
+        S3Transcript:
+          Type: S3
+          Properties:
+            Bucket: !Ref TranscriptsBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: voice_transcripts/
+                  - Name: suffix
+                    Value: .json
+
+Outputs:
+  TranscriptsBucketName:
+    Description: S3 bucket for transcripts and recordings
+    Value: !Ref TranscriptsBucket
+  
+  DynamoDBTableName:
+    Description: DynamoDB table for QA results
+    Value: !Ref CallQAResultsTable
+  
+  SNSTopicArn:
+    Description: SNS topic for supervisor alerts
+    Value: !Ref SupervisorAlertsTopic
+  
+  StartQAFunctionArn:
+    Description: Lambda function to start QA process
+    Value: !GetAtt StartQAFunction.Arn
+  
+  AnalyzeFunctionArn:
+    Description: Lambda function to analyze transcripts
+    Value: !GetAtt AnalyzeTranscriptFunction.Arn

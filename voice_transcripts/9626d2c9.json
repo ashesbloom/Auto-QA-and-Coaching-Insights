@@ -1,0 +1,55 @@
+{
+  "session_id": "9626d2c9",
+  "agent_name": "Priya",
+  "start_time": "2026-01-31T16:53:03.003511",
+  "end_time": "2026-01-31T16:54:18.373597",
+  "duration_seconds": 75,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-01-31T16:53:03.003511"
+    },
+    {
+      "speaker": "customer",
+      "text": "I have some battery issues right now how to solve it",
+      "timestamp": "2026-01-31T16:53:18.898861"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'll be happy to help you with that. Could you please provide your registered phone number so I can access your account?",
+      "timestamp": "2026-01-31T16:53:19.684494"
+    },
+    {
+      "speaker": "customer",
+      "text": "my registered phone number is 1234567890",
+      "timestamp": "2026-01-31T16:53:37.255720"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'll be happy to help you with that. Could you please provide your registered phone number so I can access your account?",
+      "timestamp": "2026-01-31T16:53:37.471464"
+    },
+    {
+      "speaker": "customer",
+      "text": "the solution without the phone number issue",
+      "timestamp": "2026-01-31T16:53:55.358768"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'll be happy to help you with that. Could you please provide your registered phone number so I can access your account?",
+      "timestamp": "2026-01-31T16:53:55.543760"
+    },
+    {
+      "speaker": "customer",
+      "text": "can you help me without accessing my account",
+      "timestamp": "2026-01-31T16:54:14.247990"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'll be happy to help you with that. Could you please provide your registered phone number so I can access your account?",
+      "timestamp": "2026-01-31T16:54:14.456709"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: I have some battery issues right now how to solve it\n\nAgent: I'll be happy to help you with that. Could you please provide your registered phone number so I can access your account?\n\nCustomer: my registered phone number is 1234567890\n\nAgent: I'll be happy to help you with that. Could you please provide your registered phone number so I can access your account?\n\nCustomer: the solution without the phone number issue\n\nAgent: I'll be happy to help you with that. Could you please provide your registered phone number so I can access your account?\n\nCustomer: can you help me without accessing my account\n\nAgent: I'll be happy to help you with that. Could you please provide your registered phone number so I can access your account?"
+}

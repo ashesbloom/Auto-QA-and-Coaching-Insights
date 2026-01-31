@@ -1,0 +1,25 @@
+{
+  "session_id": "f6fadfe1",
+  "agent_name": "Priya",
+  "start_time": "2026-01-31T18:24:54.749135",
+  "end_time": "2026-01-31T18:25:10.235338",
+  "duration_seconds": 15,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-01-31T18:24:54.749150"
+    },
+    {
+      "speaker": "customer",
+      "text": "hi my name is Mayank and I am having issues with my battery",
+      "timestamp": "2026-01-31T18:25:08.609249"
+    },
+    {
+      "speaker": "agent",
+      "text": "Hello! Welcome to Battery Smart. How can I help you today?",
+      "timestamp": "2026-01-31T18:25:08.983206"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: hi my name is Mayank and I am having issues with my battery\n\nAgent: Hello! Welcome to Battery Smart. How can I help you today?"
+}

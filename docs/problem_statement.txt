@@ -1,0 +1,27 @@
+2) Auto-QA and Coaching Insights from 100% of Calls
+Objective
+Design an Auto-QA system that evaluates 100% of customer support calls, scores them
+across quality dimensions, and generates agent-level + city-level coaching insights, with
+supervisor flagging for high-risk calls.
+What the System Must Evaluate
+1. Script adherence + key step completion
+2. Sentiment trajectory + escalation risk
+3. Resolution correctness vs Battery Smart SOPs
+4. Coaching insights (agent + city patterns)
+5. Supervisor flags for urgent review
+Candidate Deliverables
+1. Scoring framework (rubric + weights)
+2. What “good call” looks like (definition + examples)
+3. How sentiment trajectory is measured
+4. Correctness evaluation logic (SOP alignment approach)
+5. Coaching insights format
+○ per agent (themes + examples)
+○ per city (root causes + patterns)
+6. Supervisor alert policy (what gets flagged and why)
+7. Dashboards mock (QA scorecards, trends, leaderboards)
+8. Implementation approach (speech-to-text → QA model → insights → reporting)
+Evaluation Focus
+● Practical scoring design (not overly theoretical)
+● Explainability of QA outputs (agents trust it)
+● Actionable coaching insights (not generic)
+● Risk prioritization quality

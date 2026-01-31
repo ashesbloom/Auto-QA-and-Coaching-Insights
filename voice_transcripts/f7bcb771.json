@@ -1,0 +1,46 @@
+{
+  "session_id": "f7bcb771",
+  "agent_name": "Priya",
+  "start_time": "2026-02-01T00:48:43.710950",
+  "end_time": "2026-02-01T00:50:25.296175",
+  "duration_seconds": 102,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-02-01T00:48:43.710985"
+    },
+    {
+      "speaker": "customer",
+      "text": "how can I replace my batteries",
+      "timestamp": "2026-02-01T00:48:57.355937"
+    },
+    {
+      "speaker": "agent",
+      "text": "I can help you with that. To replace your batteries, you can simply visit any of our 500+ Battery Smart swap stations across India. The process is quick and easy, taking about 30 seconds. Just pull into a station, and our staff will assist you in swapping out your old battery for a new, fully charged one. You can find the nearest station using our Battery Smart app, which also shows real-time battery availability. Would you like me to guide you on how to use the app to find a station near you?",
+      "timestamp": "2026-02-01T00:48:58.107288"
+    },
+    {
+      "speaker": "customer",
+      "text": "no actually I want to know about the cost of swapping batteries",
+      "timestamp": "2026-02-01T00:49:46.359149"
+    },
+    {
+      "speaker": "agent",
+      "text": "We have over 500 swap stations across India! You can find the nearest one using the Battery Smart app. Swapping takes just 30 seconds.",
+      "timestamp": "2026-02-01T00:49:46.593452"
+    },
+    {
+      "speaker": "customer",
+      "text": "and what is the cost of swapping batteries",
+      "timestamp": "2026-02-01T00:50:05.182171"
+    },
+    {
+      "speaker": "agent",
+      "text": "We have over 500 swap stations across India! You can find the nearest one using the Battery Smart app. Swapping takes just 30 seconds.",
+      "timestamp": "2026-02-01T00:50:05.354262"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: how can I replace my batteries\n\nAgent: I can help you with that. To replace your batteries, you can simply visit any of our 500+ Battery Smart swap stations across India. The process is quick and easy, taking about 30 seconds. Just pull into a station, and our staff will assist you in swapping out your old battery for a new, fully charged one. You can find the nearest station using our Battery Smart app, which also shows real-time battery availability. Would you like me to guide you on how to use the app to find a station near you?\n\nCustomer: no actually I want to know about the cost of swapping batteries\n\nAgent: We have over 500 swap stations across India! You can find the nearest one using the Battery Smart app. Swapping takes just 30 seconds.\n\nCustomer: and what is the cost of swapping batteries\n\nAgent: We have over 500 swap stations across India! You can find the nearest one using the Battery Smart app. Swapping takes just 30 seconds.",
+  "llm_provider": "groq"
+}

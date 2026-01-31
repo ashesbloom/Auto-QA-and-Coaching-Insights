@@ -1,0 +1,36 @@
+{
+  "session_id": "3bb117cc",
+  "agent_name": "Priya",
+  "start_time": "2026-02-01T01:33:45.662546",
+  "end_time": "2026-02-01T01:34:34.481696",
+  "duration_seconds": 49,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-02-01T01:33:45.662577"
+    },
+    {
+      "speaker": "customer",
+      "text": "how to check my battery warranty",
+      "timestamp": "2026-02-01T01:33:59.291861"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?",
+      "timestamp": "2026-02-01T01:33:59.590228"
+    },
+    {
+      "speaker": "customer",
+      "text": "where I can stop my batteries",
+      "timestamp": "2026-02-01T01:34:17.257817"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?",
+      "timestamp": "2026-02-01T01:34:17.563147"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: how to check my battery warranty\n\nAgent: I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?\n\nCustomer: where I can stop my batteries\n\nAgent: I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?",
+  "llm_provider": "groq"
+}

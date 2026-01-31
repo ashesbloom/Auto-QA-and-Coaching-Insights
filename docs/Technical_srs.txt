@@ -1,0 +1,131 @@
+Here is a complete, technically precise **Software Requirements Specification (SRS)** designed specifically to be fed into an **IDE Agent** (like Cursor, GitHub Copilot, or Windsurf).
+
+It uses the **AWS Serverless + WebRTC (LiveKit)** architecture we defined, optimized for a **Burner Account**.
+
+---
+
+# Software Requirements Specification (SRS): Battery Smart Auto-QA & AI Voice Agent
+
+## 1. Project Overview
+
+**Objective:** Build an inbound AI voice assistant that handles customer support calls via WebRTC (browser-based calling). The system must record 100% of calls and perform asynchronous Auto-QA (Quality Assurance) using Generative AI to score agents against specific Standard Operating Procedures (SOPs), analyze sentiment, and trigger real-time alerts for high-risk calls.
+
+**Deployment Constraints:**
+
+* Must be deployed on an **AWS Burner Account** (optimize for AWS Credits compatibility).
+* Minimize "always-on" costs; favor Serverless (Lambda/Bedrock) over persistent instances where possible.
+
+---
+
+## 2. Technical Stack (AWS-Native)
+
+### **A. Real-Time Telephony Layer (Self-Hosted)**
+
+* **Protocol:** WebRTC
+* **Server Engine:** **LiveKit** (Docker container).
+* **Infrastructure:** **AWS EC2** (Instance Type: `t3.medium` or `t4g.small` ARM for cost savings).
+* **OS:** Ubuntu 22.04 LTS.
+* **AI Voice Client:** Python script using **Pipecat** framework (running on the same EC2 instance or ECS Fargate).
+* **Egress/Recording:** LiveKit Egress Service configured to save audio files (`.wav` or `.mp4`) directly to **AWS S3**.
+
+### **B. Asynchronous QA Layer (Serverless)**
+
+* **Trigger Mechanism:** **AWS S3 Event Notifications** (triggers Lambda on `ObjectCreated`).
+* **Transcription:** **AWS Transcribe** (Batch mode).
+* **Intelligence ("The Judge"):** **AWS Bedrock** via Boto3.
+* **Model:** `anthropic.claude-3-haiku-20240307-v1:0` (Cost-optimized) or `anthropic.claude-3-5-sonnet-20240620-v1:0` (Performance).
+
+
+* **Compute:** **AWS Lambda** (Python 3.11 Runtime).
+* **Database:** **AWS DynamoDB** (On-demand capacity).
+* **Alerting:** **AWS SNS** (Standard Topic for SMS/Email).
+
+---
+
+## 3. Functional Requirements
+
+### **Feature 1: Inbound Web Call Handling**
+
+1. **Client:** A simple React frontend (hosted on S3 Static Website Hosting) with a "Call Support" button.
+2. **Connection:** Establishing a WebRTC connection to the LiveKit Server on EC2.
+3. **AI Interaction:** The Pipecat agent must join the room immediately, greet the user, and handle the conversation.
+4. **Escalation:** If the user requests a human or specific keywords ("Manager", "Escalate") are detected, the system must support "invite" logic (simulated for MVP).
+
+### **Feature 2: Automated Quality Assurance (Auto-QA)**
+
+The system must evaluate **100%** of calls against the "Battery Smart" SOPs.
+
+* **Inputs:** Call Audio Recording (S3).
+* **Process:**
+1. Convert Audio to Text (Speaker Diarized: Agent vs. Customer).
+2. Feed Transcript + SOP Context into LLM (Bedrock).
+
+
+* **Scoring Rubric (JSON Output required):**
+* **Script Adherence:** Did the agent follow the greeting and closing scripts?
+* **SOP Correctness:** If "Swollen Battery" was mentioned, did the agent ask for a photo?
+* **Sentiment Trajectory:** Calculate `Sentiment_End - Sentiment_Start`.
+* **Risk Flag:** Boolean flag for urgent supervisor review.
+
+
+
+### **Feature 3: Data Storage & Reporting**
+
+* **Schema:** Store the following in DynamoDB table `CallQA_Results`:
+* `call_id` (Primary Key)
+* `timestamp`
+* `agent_id`
+* `transcript_text`
+* `overall_score` (0-100)
+* `violation_flags` (List[String])
+* `summary_insight` (String)
+
+
+
+### **Feature 4: Supervisor Alerts**
+
+* **Condition:** IF `violation_flags` is NOT empty OR `overall_score` < 60.
+* **Action:** Publish a message to AWS SNS Topic `SupervisorAlerts`.
+
+---
+
+## 4. System Workflow (Architecture Diagram)
+
+**Step 1: The Call (Real-Time)**
+`User (React App)` --[WebRTC]--> `LiveKit Server (EC2)`
+`Pipecat Agent (Python)` --[Join Room]--> `LiveKit Server (EC2)`
+`LiveKit Egress` --[Save Recording]--> `AWS S3 Bucket (raw-recordings)`
+
+**Step 2: The Analysis (Async Trigger)**
+`AWS S3` --[Event: ObjectCreated]--> `Lambda Function (StartQA)`
+`Lambda (StartQA)` --[StartJob]--> `AWS Transcribe`
+
+**Step 3: The "Judge" Logic**
+`AWS Transcribe` --[JobComplete]--> `S3 (transcripts-json)`
+`S3` --[Event: ObjectCreated]--> `Lambda Function (AnalyzeTranscript)`
+`Lambda (AnalyzeTranscript)` --[InvokeModel]--> `AWS Bedrock (Claude 3 Haiku)`
+`AWS Bedrock` --[Return JSON]--> `Lambda (AnalyzeTranscript)`
+
+**Step 4: Action & Storage**
+`Lambda (AnalyzeTranscript)` --[PutItem]--> `AWS DynamoDB`
+`Lambda (AnalyzeTranscript)` --[Publish (if Risk)]--> `AWS SNS`
+
+---
+
+## 5. Development Instructions for IDE Agent
+
+**Directives:**
+
+1. **Infrastructure as Code (IaC):** Use **AWS SAM (Serverless Application Model)** or **Terraform** to define the S3 buckets, Lambda functions, DynamoDB tables, and IAM roles.
+2. **LiveKit Setup:** Provide a `docker-compose.yml` for running LiveKit and the Egress service on the EC2 instance.
+3. **Python Code:**
+* Use `boto3` for all AWS interactions.
+* Use `pydantic` to define the JSON schema for the Bedrock LLM output to ensure strict parsing.
+* The Lambda function for analysis must include a retry mechanism for Bedrock API throttling.
+
+
+4. **Prompt Engineering:** Store the "System Prompt" (SOPs and Rubric) in a separate text file or Lambda Environment Variable so it can be easily updated without redeploying code.
+
+---
+
+**End of SRS**

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Battery Smart Auto-QA Server
+  battery-smart:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: battery-smart-server
+    ports:
+      - "5000:5000"
+    environment:
+      # AWS Configuration
+      - USE_AWS=${USE_AWS:-false}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      
+      # Bedrock LLM
+      - AWS_BEDROCK_MODEL=${AWS_BEDROCK_MODEL:-anthropic.claude-3-haiku-20240307-v1:0}
+      - AWS_BEDROCK_STREAMING=${AWS_BEDROCK_STREAMING:-true}
+      
+      # Polly TTS
+      - AWS_POLLY_VOICE=${AWS_POLLY_VOICE:-Kajal}
+      - AWS_POLLY_ENGINE=${AWS_POLLY_ENGINE:-neural}
+      
+      # S3 Storage
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - AWS_S3_TRANSCRIPTS_PREFIX=${AWS_S3_TRANSCRIPTS_PREFIX:-voice_transcripts/}
+      
+      # Fallback (Gemini)
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      
+      # Flask
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-battery-smart-secret}
+      - DEBUG=${DEBUG:-false}
+    volumes:
+      # Mount local storage for fallback
+      - voice_transcripts:/app/voice_transcripts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/voice/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  voice_transcripts:
