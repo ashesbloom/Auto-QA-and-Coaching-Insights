@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battery Smart Voice Agent</title>
+    <link rel="stylesheet" href="/static/voice.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">Battery Smart</span>
+            </div>
+            <div class="header-subtitle">AI Voice Agent</div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Connection Status -->
+            <div class="status-bar">
+                <div class="status-indicator" id="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Connecting...</span>
+                </div>
+            </div>
+
+            <!-- Voice Call Interface -->
+            <div class="call-interface">
+                <!-- Agent Avatar -->
+                <div class="agent-section">
+                    <div class="agent-avatar" id="agent-avatar">
+                        <span class="avatar-icon">🎧</span>
+                        <div class="audio-wave" id="audio-wave">
+                            <span></span><span></span><span></span><span></span><span></span>
+                        </div>
+                    </div>
+                    <h2 class="agent-name">Priya</h2>
+                    <p class="agent-role">Customer Support Agent</p>
+                </div>
+
+                <!-- Call Timer -->
+                <div class="call-timer" id="call-timer">
+                    <span class="timer-icon">📞</span>
+                    <span class="timer-value" id="timer-value">00:00</span>
+                </div>
+
+                <!-- Transcript -->
+                <div class="transcript-container">
+                    <h3>Live Transcript</h3>
+                    <div class="transcript" id="transcript">
+                        <div class="transcript-placeholder">
+                            Click "Start Call" to begin your conversation with our AI agent
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn mute-btn" id="mute-btn" disabled>
+                        <span class="btn-icon">🎤</span>
+                        <span class="btn-text">Mute</span>
+                    </button>
+
+                    <button class="control-btn call-btn" id="call-btn">
+                        <span class="btn-icon">📞</span>
+                        <span class="btn-text">Start Call</span>
+                    </button>
+
+                    <button class="control-btn end-btn hidden" id="end-btn">
+                        <span class="btn-icon">📴</span>
+                        <span class="btn-text">End Call</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="instructions">
+                <h3>How to use</h3>
+                <ol>
+                    <li>Click <strong>Start Call</strong> to connect with our AI agent</li>
+                    <li>Speak naturally - your voice will be transcribed automatically</li>
+                    <li>The agent will respond via text and voice</li>
+                    <li>Click <strong>End Call</strong> when finished</li>
+                </ol>
+                <p class="note">🎙️ Microphone permission required for voice input</p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 Battery Smart. AI-Powered Customer Support.</p>
+        </footer>
+    </div>
+
+    <!-- Audio element for TTS playback -->
+    <audio id="audio-player" style="display: none;"></audio>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/static/voice.js"></script>
+</body>
+
+</html>

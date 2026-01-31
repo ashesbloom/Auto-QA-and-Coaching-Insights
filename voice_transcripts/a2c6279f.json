@@ -1,0 +1,35 @@
+{
+  "session_id": "a2c6279f",
+  "agent_name": "Priya",
+  "start_time": "2026-01-31T22:42:30.321972",
+  "end_time": "2026-01-31T22:43:16.240169",
+  "duration_seconds": 46,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-01-31T22:42:30.321972"
+    },
+    {
+      "speaker": "customer",
+      "text": "what is battery plant",
+      "timestamp": "2026-01-31T22:42:43.536839"
+    },
+    {
+      "speaker": "agent",
+      "text": "Battery Plant is the facility where we manufacture the swap\u2011ready batteries used across our network. Let me check on that for more details.",
+      "timestamp": "2026-01-31T22:42:44.382536"
+    },
+    {
+      "speaker": "customer",
+      "text": "how do you have your battery in real life",
+      "timestamp": "2026-01-31T22:43:00.725262"
+    },
+    {
+      "speaker": "agent",
+      "text": "You get a fully charged, swap\u2011ready battery at any of our 500+ stations\u2014just ride in, swap in 30 seconds, and you\u2019re ready to go.",
+      "timestamp": "2026-01-31T22:43:01.399315"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: what is battery plant\n\nAgent: Battery Plant is the facility where we manufacture the swap\u2011ready batteries used across our network. Let me check on that for more details.\n\nCustomer: how do you have your battery in real life\n\nAgent: You get a fully charged, swap\u2011ready battery at any of our 500+ stations\u2014just ride in, swap in 30 seconds, and you\u2019re ready to go."
+}

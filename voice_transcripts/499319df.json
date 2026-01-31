@@ -1,0 +1,45 @@
+{
+  "session_id": "499319df",
+  "agent_name": "Priya",
+  "start_time": "2026-01-31T22:05:54.740638",
+  "end_time": "2026-01-31T22:07:29.024042",
+  "duration_seconds": 94,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-01-31T22:05:54.740638"
+    },
+    {
+      "speaker": "customer",
+      "text": "what are the Warriors on my battery warranties on my batteries",
+      "timestamp": "2026-01-31T22:06:14.275149"
+    },
+    {
+      "speaker": "agent",
+      "text": "Battery warranties cover manufacturing defects for 12 months or up to 5,000 km, whichever comes first, and include free repairs or replacements at any Battery Smart service centre. Let me know if you need a claim.",
+      "timestamp": "2026-01-31T22:06:15.079294"
+    },
+    {
+      "speaker": "customer",
+      "text": "I need a claim for my warranty",
+      "timestamp": "2026-01-31T22:06:48.367206"
+    },
+    {
+      "speaker": "agent",
+      "text": "Sure! Open the Battery Smart app, tap \u201cWarranty Claim,\u201d upload your purchase receipt and battery ID, then drop the battery at the nearest service centre for free replacement.",
+      "timestamp": "2026-01-31T22:06:48.943257"
+    },
+    {
+      "speaker": "customer",
+      "text": "where is the real service centre",
+      "timestamp": "2026-01-31T22:07:11.539581"
+    },
+    {
+      "speaker": "agent",
+      "text": "Open the Battery Smart app, go to \u201cFind Service Centre,\u201d and it will show the nearest location with address, map and live hours. All our swap stations double as service centres.",
+      "timestamp": "2026-01-31T22:07:12.044794"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: what are the Warriors on my battery warranties on my batteries\n\nAgent: Battery warranties cover manufacturing defects for 12 months or up to 5,000 km, whichever comes first, and include free repairs or replacements at any Battery Smart service centre. Let me know if you need a claim.\n\nCustomer: I need a claim for my warranty\n\nAgent: Sure! Open the Battery Smart app, tap \u201cWarranty Claim,\u201d upload your purchase receipt and battery ID, then drop the battery at the nearest service centre for free replacement.\n\nCustomer: where is the real service centre\n\nAgent: Open the Battery Smart app, go to \u201cFind Service Centre,\u201d and it will show the nearest location with address, map and live hours. All our swap stations double as service centres."
+}

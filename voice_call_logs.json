@@ -1,0 +1,434 @@
+[
+  {
+    "id": "VC-1769879603428",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T17:13:16.239Z",
+    "duration": "00:45",
+    "status": "completed",
+    "rating": 4,
+    "feedbackTags": [
+      "response-time"
+    ],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "what is battery plant"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Battery Plant is the facility where we manufacture the swap\u2011ready batteries used across our network. Let me check on that for more details."
+      },
+      {
+        "speaker": "Customer",
+        "text": "how do you have your battery in real life"
+      },
+      {
+        "speaker": "Agent",
+        "text": "You get a fully charged, swap\u2011ready battery at any of our 500+ stations\u2014just ride in, swap in 30 seconds, and you\u2019re ready to go."
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
+    "id": "VC-1769877459132",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T16:37:29.022Z",
+    "duration": "01:34",
+    "status": "completed",
+    "rating": 0,
+    "feedbackTags": [],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "what are the Warriors on my battery warranties on my batteries"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Battery warranties cover manufacturing defects for 12 months or up to 5,000 km, whichever comes first, and include free repairs or replacements at any Battery Smart service centre. Let me know if you need a claim."
+      },
+      {
+        "speaker": "Customer",
+        "text": "I need a claim for my warranty"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Sure! Open the Battery Smart app, tap \u201cWarranty Claim,\u201d upload your purchase receipt and battery ID, then drop the battery at the nearest service centre for free replacement."
+      },
+      {
+        "speaker": "Customer",
+        "text": "where is the real service centre"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Open the Battery Smart app, go to \u201cFind Service Centre,\u201d and it will show the nearest location with address, map and live hours. All our swap stations double as service centres."
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
+    "id": "VC-1769877205920",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T16:33:23.279Z",
+    "duration": "00:38",
+    "status": "completed",
+    "rating": 3,
+    "feedbackTags": [],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "what is the warranty on my batteries"
+      },
+      {
+        "speaker": "Agent",
+        "text": "I'm here to help! You can ask me about battery swaps, finding stations, subscription plans, or technical issues. What would you like to know?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "tell me about the warranty on my batteries"
+      },
+      {
+        "speaker": "Agent",
+        "text": "I'm here to help! You can ask me about battery swaps, finding stations, subscription plans, or technical issues. What would you like to know?"
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
+    "id": "VC-1769875458263",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T16:04:15.214Z",
+    "duration": "01:03",
+    "status": "completed",
+    "rating": 4,
+    "feedbackTags": [
+      "accuracy"
+    ],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "what are the warranties on my battery"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Battery Smart provides a 12\u2011month warranty covering any performance or defect issues; if you need a claim, just raise it in the app or visit any swap station."
+      },
+      {
+        "speaker": "Customer",
+        "text": "warranty claim"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Open the Battery Smart app, tap Warranty \u2192 File Claim, upload a photo of the battery and a brief description, then submit. You can also visit any swap station for immediate assistance."
+      },
+      {
+        "speaker": "Customer",
+        "text": "how much time"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Claims are reviewed within 24\u201348 hours, and a replacement battery can be provided at any swap station on the same day."
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
+    "id": "VC-1769875313862",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T16:01:51.005Z",
+    "duration": "01:30",
+    "status": "completed",
+    "rating": 3,
+    "feedbackTags": [
+      "helpfulness"
+    ],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "give me nearest battle smart station"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Open the Battery Smart app and tap 'Find Station' for nearest locations with live battery availability."
+      },
+      {
+        "speaker": "Customer",
+        "text": "I have smoke coming out of my battery what do I do"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Immediately stop using your scooter and visit the nearest Battery Smart station for a safe battery swap."
+      },
+      {
+        "speaker": "Customer",
+        "text": "I have stop using my battery tell me the next thing"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Head to the nearest Battery Smart station for a swap - our team will replace it with a fully charged one."
+      },
+      {
+        "speaker": "Customer",
+        "text": "I am in Sector 55 Gurgaon locate the nearest battery"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Check the Battery Smart app for nearest stations in Sector 55, Gurgaon - it'll show live availability and directions."
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
+    "id": "VC-1769875031067",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T15:57:08.475Z",
+    "duration": "00:52",
+    "status": "completed",
+    "rating": 2,
+    "feedbackTags": [],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "my battery swelling"
+      },
+      {
+        "speaker": "Agent",
+        "text": "I'm here to help! You can ask me about battery swaps, finding stations, subscription plans, or technical issues. What would you like to know?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "tell me about the nearest metro station"
+      },
+      {
+        "speaker": "Agent",
+        "text": "I'm here to help! You can ask me about battery swaps, finding stations, subscription plans, or technical issues. What would you like to know?"
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
+    "id": "VC-1769874603643",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T15:50:01.469Z",
+    "duration": "01:00",
+    "status": "completed",
+    "rating": 5,
+    "feedbackTags": [],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "have a battery sorted issue in my reason"
+      },
+      {
+        "speaker": "Agent",
+        "text": "I'm here to help! You can ask me about battery swaps, finding stations, subscription plans, or technical issues. What would you like to know?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "my battery is volume give me some"
+      },
+      {
+        "speaker": "Agent",
+        "text": "I'm here to help! You can ask me about battery swaps, finding stations, subscription plans, or technical issues. What would you like to know?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "I want to know about the battery availability in my reason"
+      },
+      {
+        "speaker": "Agent",
+        "text": "I'm here to help! You can ask me about battery swaps, finding stations, subscription plans, or technical issues. What would you like to know?"
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
+    "id": "VC-1769874213465",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T15:43:29.712Z",
+    "duration": "01:07",
+    "status": "completed",
+    "rating": 4,
+    "feedbackTags": [
+      "response-time"
+    ],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "subscription status"
+      },
+      {
+        "speaker": "Agent",
+        "text": "We have three plans! Basic at 1,999 rupees for 30 swaps, Pro at 2,999 for 60 swaps, and Premium at 3,999 for unlimited swaps."
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
+    "id": "VC-1769873998054",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T15:39:50.092Z",
+    "duration": "01:33",
+    "status": "completed",
+    "rating": 3,
+    "feedbackTags": [
+      "response-time"
+    ],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "I have a battery shorted issue in my region"
+      },
+      {
+        "speaker": "Agent",
+        "text": "I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "I want a battery availability in Delhi India"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Hello! Welcome to Battery Smart. How can I help you today?"
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
+    "id": "VC-1769872771572",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T15:19:29.940Z",
+    "duration": "00:01",
+    "status": "completed",
+    "rating": 0,
+    "feedbackTags": [],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
+    "id": "VC-1769863859558",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T12:50:44.473Z",
+    "duration": "00:50",
+    "status": "completed",
+    "rating": 4,
+    "feedbackTags": [
+      "accuracy"
+    ],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "kyon"
+      },
+      {
+        "speaker": "Agent",
+        "text": "I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "I am having a battery"
+      },
+      {
+        "speaker": "Agent",
+        "text": "I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "can you locate my nearest battery smart station"
+      },
+      {
+        "speaker": "Agent",
+        "text": "We have over 500 swap stations across India! You can find the nearest one using the Battery Smart app. Swapping takes just 30 seconds."
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  }
+]

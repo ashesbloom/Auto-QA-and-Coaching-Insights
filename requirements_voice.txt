@@ -1,0 +1,20 @@
+# Battery Smart Voice Agent - Requirements
+# Install with: pip install -r requirements_voice.txt
+
+# Gemini LLM
+google-generativeai>=0.3.0
+
+# Text-to-Speech (Microsoft Edge TTS - free)
+edge-tts>=6.1.0
+
+# WebSocket support for Flask
+flask-socketio>=5.3.0
+python-socketio>=5.10.0
+eventlet>=0.33.0
+
+# Optional: OpenAI Whisper for server-side STT
+# Uncomment if you want server-side speech-to-text instead of browser-based
+# openai-whisper>=20231117
+
+# Audio processing (if using server-side STT)
+# numpy>=1.24.0

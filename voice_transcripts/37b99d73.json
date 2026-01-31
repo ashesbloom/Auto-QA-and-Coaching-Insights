@@ -1,0 +1,45 @@
+{
+  "session_id": "37b99d73",
+  "agent_name": "Priya",
+  "start_time": "2026-01-31T18:19:53.973270",
+  "end_time": "2026-01-31T18:20:44.474507",
+  "duration_seconds": 51,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-01-31T18:19:53.973270"
+    },
+    {
+      "speaker": "customer",
+      "text": "kyon",
+      "timestamp": "2026-01-31T18:20:03.537818"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?",
+      "timestamp": "2026-01-31T18:20:04.936808"
+    },
+    {
+      "speaker": "customer",
+      "text": "I am having a battery",
+      "timestamp": "2026-01-31T18:20:07.935277"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?",
+      "timestamp": "2026-01-31T18:20:08.157093"
+    },
+    {
+      "speaker": "customer",
+      "text": "can you locate my nearest battery smart station",
+      "timestamp": "2026-01-31T18:20:26.953191"
+    },
+    {
+      "speaker": "agent",
+      "text": "We have over 500 swap stations across India! You can find the nearest one using the Battery Smart app. Swapping takes just 30 seconds.",
+      "timestamp": "2026-01-31T18:20:27.141886"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: kyon\n\nAgent: I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?\n\nCustomer: I am having a battery\n\nAgent: I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?\n\nCustomer: can you locate my nearest battery smart station\n\nAgent: We have over 500 swap stations across India! You can find the nearest one using the Battery Smart app. Swapping takes just 30 seconds."
+}
