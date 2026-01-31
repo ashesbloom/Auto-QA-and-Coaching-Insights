@@ -1,0 +1,45 @@
+{
+  "session_id": "a7bb56cb",
+  "agent_name": "Priya",
+  "start_time": "2026-01-31T23:07:25.459021",
+  "end_time": "2026-01-31T23:08:55.909456",
+  "duration_seconds": 90,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-01-31T23:07:25.459021"
+    },
+    {
+      "speaker": "customer",
+      "text": "how battery smart uses batteries",
+      "timestamp": "2026-01-31T23:07:40.653932"
+    },
+    {
+      "speaker": "agent",
+      "text": "We supply fully charged batteries at our 500+ swap stations\u2014just pull into a station, swap your depleted battery for a charged one in about 30 seconds, all covered by your subscription.",
+      "timestamp": "2026-01-31T23:07:41.332404"
+    },
+    {
+      "speaker": "customer",
+      "text": "what is the subscription plan",
+      "timestamp": "2026-01-31T23:08:02.490065"
+    },
+    {
+      "speaker": "agent",
+      "text": "We have three plans: Basic \u20b91,999/month (30 swaps), Pro \u20b92,999/month (60 swaps), and Premium \u20b93,999/month (unlimited swaps). You can upgrade or downgrade anytime in the app.",
+      "timestamp": "2026-01-31T23:08:02.961205"
+    },
+    {
+      "speaker": "customer",
+      "text": "what is including program",
+      "timestamp": "2026-01-31T23:08:32.877778"
+    },
+    {
+      "speaker": "agent",
+      "text": "Each plan includes battery swaps at any of our 500 + stations (30 s per swap), access to fully charged batteries, app\u2011based station finder, and 24/7 support\u2014no extra charging fees.",
+      "timestamp": "2026-01-31T23:08:33.736052"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: how battery smart uses batteries\n\nAgent: We supply fully charged batteries at our 500+ swap stations\u2014just pull into a station, swap your depleted battery for a charged one in about 30 seconds, all covered by your subscription.\n\nCustomer: what is the subscription plan\n\nAgent: We have three plans: Basic \u20b91,999/month (30 swaps), Pro \u20b92,999/month (60 swaps), and Premium \u20b93,999/month (unlimited swaps). You can upgrade or downgrade anytime in the app.\n\nCustomer: what is including program\n\nAgent: Each plan includes battery swaps at any of our 500 + stations (30 s per swap), access to fully charged batteries, app\u2011based station finder, and 24/7 support\u2014no extra charging fees."
+}

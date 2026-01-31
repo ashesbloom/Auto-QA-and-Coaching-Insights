@@ -753,55 +753,95 @@ async function viewEvaluationDetails(evaluationId) {
         const result = await response.json();
 
         if (!result.success || !result.evaluation) {
-            body.innerHTML = '<p>Evaluation not found</p>';
+            body.innerHTML = '<p class="text-center text-slate-400">Evaluation not found</p>';
             return;
         }
 
         const data = result.evaluation;
+        const scoreColor = data.overall.score >= 80 ? '#10b981' : (data.overall.score >= 60 ? '#f59e0b' : '#ef4444');
+        const gradientClass = data.overall.score >= 80 ? 'from-emerald-500/20 to-emerald-900/10' : (data.overall.score >= 60 ? 'from-amber-500/20 to-amber-900/10' : 'from-red-500/20 to-red-900/10');
 
-        // Reuse existing modal rendering from viewCallDetails function
         body.innerHTML = `
-            <h2 style="margin-top: 0;">Evaluation ${evaluationId}</h2>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; color: #94a3b8; font-size: 14px;">
-                <div><strong>Call ID:</strong> ${data.metadata.call_id}</div>
-                <div><strong>Agent:</strong> ${data.metadata.agent_name}</div>
-                <div><strong>City:</strong> ${data.metadata.city}</div>
-                <div><strong>Timestamp:</strong> ${data.metadata.timestamp}</div>
-                <div><strong>Overall Score:</strong> <span style="font-size: 24px; color: #6366f1">${data.overall.score}/100</span></div>
-                <div><strong>Grade:</strong> ${data.overall.grade}</div>
-            </div>
-            
-            <h3 style="margin: 20px 0 12px;">Pillar Breakdown</h3>
-            <div style="display: grid; gap: 12px;">
-                ${Object.entries(data.pillar_scores).map(([pillar, info]) => `
-                    <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                        <span>${pillar.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
-                        <span style="font-weight: 600">${info.score}/100 (×${info.weight})</span>
+            <!-- Header Section -->
+            <div style="background: linear-gradient(to right, rgba(255,255,255,0.05), rgba(255,255,255,0)); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: #f8fafc;">Evaluation Report</h2>
+                        <div style="color: #94a3b8; font-size: 13px; margin-top: 4px;">ID: ${data.evaluation_id} • ${new Date(data.metadata.timestamp).toLocaleString()}</div>
                     </div>
-                `).join('')}
+                   <div style="text-align: right;">
+                        <div style="font-size: 32px; font-weight: 700; color: ${scoreColor}; line-height: 1;">${data.overall.score}</div>
+                        <div style="font-size: 12px; color: ${scoreColor}; font-weight: 600; margin-top: 4px;">${data.overall.grade}</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+                    <div>
+                        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;">Agent</div>
+                        <div style="color: #e2e8f0; font-weight: 500;">${data.metadata.agent_name}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;">Customer Location</div>
+                        <div style="color: #e2e8f0; font-weight: 500;">${data.metadata.city}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;">Duration</div>
+                        <div style="color: #e2e8f0; font-weight: 500;">${Math.round(data.metadata.duration_seconds || 0)}s</div>
+                    </div>
+                </div>
             </div>
-            
-            ${data.coaching_insights?.top_recommendations?.length ? `
-                <h3 style="margin: 20px 0 12px;">Coaching Recommendations</h3>
-                <ul style="list-style: disc; padding-left: 20px; color: #94a3b8;">
+
+            <!-- Pillar Breakdown -->
+            <h3 style="font-size: 14px; text-transform: uppercase; color: #94a3b8; margin: 0 0 12px 0;">Performance Pillars</h3>
+            <div style="display: grid; gap: 12px; margin-bottom: 24px;">
+                ${Object.entries(data.pillar_scores).map(([pillar, info]) => {
+            const pScore = info.score;
+            const pColor = pScore >= 80 ? '#10b981' : (pScore >= 60 ? '#f59e0b' : '#ef4444');
+            const width = Math.max(5, pScore); // min width 5%
+            return `
+                    <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #e2e8f0; font-size: 14px;">${pillar.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                            <span style="font-weight: 600; color: ${pColor}; font-size: 14px;">${pScore}/100</span>
+                        </div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                            <div style="width: ${width}%; height: 100%; background: ${pColor}; border-radius: 3px; transition: width 0.5s ease;"></div>
+                        </div>
+                    </div>
+                `}).join('')}
+            </div>
+
+            <!-- Coaching Recommendations -->
+             ${data.coaching_insights?.top_recommendations?.length ? `
+                <h3 style="font-size: 14px; text-transform: uppercase; color: #94a3b8; margin: 0 0 12px 0;">Coaching Insights</h3>
+                <div style="display: grid; gap: 10px;">
                     ${data.coaching_insights.top_recommendations.slice(0, 3).map(rec => `
-                        <li style="margin-bottom: 8px;">${rec}</li>
+                        <div style="display: flex; gap: 12px; padding: 12px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px;">
+                            <div style="color: #60a5fa; font-size: 18px;">💡</div>
+                            <div style="color: #e2e8f0; font-size: 14px; line-height: 1.5;">${rec}</div>
+                        </div>
                     `).join('')}
-                </ul>
+                </div>
             ` : ''}
-            
+
+            <!-- Supervisor Alerts -->
             ${data.supervisor_alerts?.length ? `
-                <h3 style="margin: 20px 0 12px; color: #ef4444;">⚠️ Supervisor Alerts</h3>
-                ${data.supervisor_alerts.map(alert => `
-                    <div style="padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; margin-bottom: 8px;">
-                        <strong>${alert.category}</strong>: ${alert.keywords_matched?.join(', ')}
+                <div style="margin-top: 24px; padding: 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #f87171; font-weight: 600;">
+                        <span>⚠️</span> Supervisor Attention Required
                     </div>
-                `).join('')}
+                    ${data.supervisor_alerts.map(alert => `
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; color: #fca5a5; margin-bottom: 4px;">
+                            <span>${alert.category}</span>
+                            <span style="background: rgba(239, 68, 68, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${alert.severity}</span>
+                        </div>
+                    `).join('')}
+                </div>
             ` : ''}
         `;
 
     } catch (error) {
         console.error('Error loading evaluation details:', error);
-        body.innerHTML = '<p>Error loading evaluation details</p>';
+        body.innerHTML = '<p class="text-center text-red-400">Error loading details</p>';
     }
 }

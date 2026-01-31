@@ -43,6 +43,15 @@ class CallEvaluator:
         self.risk_evaluator = RiskComplianceEvaluator()
         
         self.weights = PILLAR_WEIGHTS
+        
+        # Initialize VoiceAgent for AI insights (Lazy load or try-except)
+        try:
+            # Import here to avoid circular dependency issues if any
+            from voice_agent import VoiceAgent
+            self.ai_agent = VoiceAgent()
+        except Exception as e:
+            print(f"Warning: Could not initialize VoiceAgent for AI insights: {e}")
+            self.ai_agent = None
     
     def evaluate_call(self, transcript: str, metadata: CallMetadata = None) -> Dict:
         """
@@ -82,11 +91,64 @@ class CallEvaluator:
             weighted_score < SUPERVISOR_ALERT_THRESHOLD
         )
         
-        # Compile all recommendations
+        # Compile all recommendations (rule-based initially)
         all_recommendations = self._compile_recommendations(
             script_result, resolution_result, sentiment_result,
             communication_result, risk_result
         )
+        
+        # Generate AI-powered insights (Specific coaching & alerts)
+        # Construct temporary score context for prompt
+        score_context = {
+            'metadata': {
+                'agent_name': metadata.agent_name if metadata else "Unknown Agent"
+            }
+        }
+        
+        ai_insights = self._generate_ai_insights(transcript, score_context)
+        
+        # Merge AI insights if available, otherwise use rule-based
+        if ai_insights:
+            # Prepend AI recommendations to rule-based ones
+            all_recommendations = ai_insights.get("recommendations", []) + all_recommendations
+            
+            # Override strengths/improvements if AI provided valid ones
+            coaching = {
+                "top_recommendations": all_recommendations[:5],
+                "strengths": ai_insights.get("strengths", self._identify_strengths(
+                    script_result, resolution_result, sentiment_result,
+                    communication_result, risk_result
+                )),
+                "areas_for_improvement": ai_insights.get("improvements", self._identify_improvements(
+                    script_result, resolution_result, sentiment_result,
+                    communication_result, risk_result
+                ))
+            }
+            
+            # Merge supervisor alerts (AI + Rule-based)
+            ai_alerts = ai_insights.get("supervisor_alerts", [])
+            existing_alerts = risk_result.get("supervisor_alerts", [])
+            # Deduplicate based on category
+            existing_categories = {a['category'] for a in existing_alerts}
+            for alert in ai_alerts:
+                if alert['category'] not in existing_categories:
+                    existing_alerts.append(alert)
+                    
+            supervisor_alerts = existing_alerts
+        else:
+            # Fallback to rule-based
+            coaching = {
+                "top_recommendations": all_recommendations[:5],
+                "strengths": self._identify_strengths(
+                    script_result, resolution_result, sentiment_result,
+                    communication_result, risk_result
+                ),
+                "areas_for_improvement": self._identify_improvements(
+                    script_result, resolution_result, sentiment_result,
+                    communication_result, risk_result
+                )
+            }
+            supervisor_alerts = risk_result.get("supervisor_alerts", [])
         
         # Build final evaluation report
         evaluation = {
@@ -102,7 +164,7 @@ class CallEvaluator:
             "overall": {
                 "score": weighted_score,
                 "grade": grade,
-                "needs_supervisor_review": needs_supervisor
+                "needs_supervisor_review": needs_supervisor or bool(supervisor_alerts)
             },
             "pillar_scores": {
                 "script_adherence": {
@@ -138,21 +200,91 @@ class CallEvaluator:
                 "communication_quality": communication_result,
                 "risk_compliance": risk_result
             },
-            "coaching_insights": {
-                "top_recommendations": all_recommendations[:5],
-                "strengths": self._identify_strengths(
-                    script_result, resolution_result, sentiment_result,
-                    communication_result, risk_result
-                ),
-                "areas_for_improvement": self._identify_improvements(
-                    script_result, resolution_result, sentiment_result,
-                    communication_result, risk_result
-                )
-            },
-            "supervisor_alerts": risk_result.get("supervisor_alerts", [])
+            "coaching_insights": coaching,
+            "supervisor_alerts": supervisor_alerts
         }
         
         return evaluation
+
+    def _generate_ai_insights(self, transcript: str, score_data: Dict) -> Optional[Dict]:
+        """
+        Generate specific coaching insights using LLM.
+        Returns: {
+            "strengths": [],
+            "improvements": [],
+            "recommendations": [],
+            "supervisor_alerts": []
+        }
+        """
+        try:
+            # Use pre-initialized agent
+            agent = self.ai_agent
+            
+            if not agent:
+                return None
+                
+            if not (agent.client or (agent.model_type == 'gemini' and agent.model)):
+                return None
+                
+            # Construct Prompt
+            prompt = f"""
+            You are a QA Supervisor for a battery swapping company. Evaluate this call transcript.
+            
+            TRANSCRIPT:
+            {transcript[:4000]}  # Truncate if too long
+            
+            CONTEXT:
+            - Agent: {score_data.get('metadata', {}).get('agent_name', 'Agent')}
+            
+            TASK:
+            Provide a valid JSON response with specific observations. Do NOT include generic advice.
+            Format:
+            {{
+                "strengths": ["Specific thing agent did well"],
+                "improvements": ["Specific thing agent missed"],
+                "recommendations": ["Actionable coaching tip"],
+                "supervisor_alerts": [
+                    {{"category": "Legal Threat", "severity": "high", "keywords_matched": ["sue"]}} 
+                    // Only if LEGAL THREAT, HARASSMENT, or SCAM detected. Otherwise empty list.
+                ]
+            }}
+            """
+            
+            response_text = ""
+            
+            # Call LLM
+            if agent.client: # Groq
+                # Use standard supported model
+                model_name = "llama-3.3-70b-versatile"
+                
+                completion = agent.client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": "You are a QA Supervisor. Output JSON only."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.3,
+                    response_format={"type": "json_object"}
+                )
+                response_text = completion.choices[0].message.content
+                
+            elif agent.model_type == 'gemini': # Gemini
+                 response = agent.model.generate_content(prompt)
+                 response_text = response.text
+            
+            # Parse JSON
+            import json
+            # handle markdown code blocks if any
+            if "```json" in response_text:
+                response_text = response_text.split("```json")[1].split("```")[0]
+            elif "```" in response_text:
+                response_text = response_text.split("```")[1].split("```")[0]
+                
+            return json.loads(response_text)
+            
+        except Exception as e:
+            print(f"Error generating AI insights: {e}")
+            return None
     
     def _calculate_weighted_score(self, script: float, resolution: float, 
                                    sentiment: float, communication: float, 

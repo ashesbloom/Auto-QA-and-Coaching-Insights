@@ -1,5 +1,51 @@
 [
   {
+    "id": "VC-1769881140749",
+    "type": "voice-call",
+    "title": "AI Voice Call",
+    "date": "2026-01-31T17:38:55.908Z",
+    "duration": "01:30",
+    "status": "completed",
+    "rating": 4,
+    "feedbackTags": [
+      "understanding"
+    ],
+    "feedbackComments": "",
+    "transcript": [
+      {
+        "speaker": "Agent",
+        "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?"
+      },
+      {
+        "speaker": "Customer",
+        "text": "how battery smart uses batteries"
+      },
+      {
+        "speaker": "Agent",
+        "text": "We supply fully charged batteries at our 500+ swap stations\u2014just pull into a station, swap your depleted battery for a charged one in about 30 seconds, all covered by your subscription."
+      },
+      {
+        "speaker": "Customer",
+        "text": "what is the subscription plan"
+      },
+      {
+        "speaker": "Agent",
+        "text": "We have three plans: Basic \u20b91,999/month (30 swaps), Pro \u20b92,999/month (60 swaps), and Premium \u20b93,999/month (unlimited swaps). You can upgrade or downgrade anytime in the app."
+      },
+      {
+        "speaker": "Customer",
+        "text": "what is including program"
+      },
+      {
+        "speaker": "Agent",
+        "text": "Each plan includes battery swaps at any of our 500 + stations (30 s per swap), access to fully charged batteries, app\u2011based station finder, and 24/7 support\u2014no extra charging fees."
+      }
+    ],
+    "customerName": "Shrey",
+    "customerPhone": "1234567890",
+    "user_email": null
+  },
+  {
     "id": "VC-1769879603428",
     "type": "voice-call",
     "title": "AI Voice Call",

@@ -1104,6 +1104,15 @@ def process_and_evaluate_transcript(session_data):
             print("❌ CallEvaluator returned None evaluation")
             return None
             
+        # Check if evaluation already exists for this call_id
+        current_call_id = metadata.call_id
+        existing_index = -1
+        
+        for i, eval_item in enumerate(voice_call_evaluations):
+            if eval_item['metadata']['call_id'] == current_call_id:
+                existing_index = i
+                break
+        
         # Add session metadata
         evaluation['session_data'] = {
             'session_id': session_data.get('session_id'),
@@ -1112,8 +1121,15 @@ def process_and_evaluate_transcript(session_data):
             'duration_seconds': session_data.get('duration_seconds'),
         }
         
-        # Add to in-memory list
-        voice_call_evaluations.insert(0, evaluation)  # Newest first
+        if existing_index >= 0:
+            # Update existing evaluation and move to top
+            print(f"Updating existing evaluation for call {current_call_id}")
+            voice_call_evaluations.pop(existing_index)
+        else:
+            print(f"Adding new evaluation for call {current_call_id}")
+            
+        # Add to in-memory list (Newest first)
+        voice_call_evaluations.insert(0, evaluation)
         
         # Persist to file
         try:
