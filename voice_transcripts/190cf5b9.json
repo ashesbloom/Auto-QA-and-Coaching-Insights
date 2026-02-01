@@ -1,0 +1,36 @@
+{
+  "session_id": "190cf5b9",
+  "agent_name": "Priya",
+  "start_time": "2026-02-01T06:53:49.271527",
+  "end_time": "2026-02-01T06:54:46.146293",
+  "duration_seconds": 57,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-02-01T06:53:49.271557"
+    },
+    {
+      "speaker": "customer",
+      "text": "I want to call",
+      "timestamp": "2026-02-01T06:54:02.521349"
+    },
+    {
+      "speaker": "agent",
+      "text": "Hello! Welcome to Battery Smart. I'm Priya, your customer support agent. How can I assist you today? Is there something specific you'd like to know or an issue you're facing with our services?",
+      "timestamp": "2026-02-01T06:54:03.098089"
+    },
+    {
+      "speaker": "customer",
+      "text": "manager",
+      "timestamp": "2026-02-01T06:54:12.934830"
+    },
+    {
+      "speaker": "agent",
+      "text": "I understand you'd like to speak with a human agent, specifically a manager. Let me connect you right away. Please hold for a moment. ||TRANSFER||",
+      "timestamp": "2026-02-01T06:54:13.334841"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: I want to call\n\nAgent: Hello! Welcome to Battery Smart. I'm Priya, your customer support agent. How can I assist you today? Is there something specific you'd like to know or an issue you're facing with our services?\n\nCustomer: manager\n\nAgent: I understand you'd like to speak with a human agent, specifically a manager. Let me connect you right away. Please hold for a moment. ||TRANSFER||",
+  "llm_provider": "groq"
+}

@@ -1037,13 +1037,15 @@ def handle_voice_user_message(data):
         # Get agent response
         response = voice_session_manager.process_message(session_id, message)
         
-        # Check for transfer marker ||TRANSFER||
-        needs_transfer = '||TRANSFER||' in response
+        # Check for transfer marker ||TRANSFER|| (flexible matching for AI variations)
+        import re
+        transfer_match = re.search(r'\|\|\s*TRANSFER\s*\|\|', response, re.IGNORECASE)
+        needs_transfer = bool(transfer_match)
         transfer_reason = None
         
         if needs_transfer:
-            # Remove the transfer marker from visible response
-            clean_response = response.replace('||TRANSFER||', '').strip()
+            # Remove the transfer marker from visible response (any variation)
+            clean_response = re.sub(r'\|\|\s*TRANSFER\s*\|\|', '', response, flags=re.IGNORECASE).strip()
             
             # Determine transfer reason
             message_lower = message.lower()
@@ -1196,6 +1198,12 @@ def handle_agent_transfer_room(data):
     room_url = data.get('room_url')
     reason = data.get('reason', 'ai_decision')
     
+    # Validate required data
+    if not session_id or not room_name or not room_url:
+        print(f"❌ Invalid transfer room data: {data}")
+        emit('error', {'message': 'Invalid transfer data - missing required fields'})
+        return
+    
     print(f"\n{'='*60}")
     print(f"📞 TRANSFER ROOM CREATED")
     print(f"   Session: {session_id}")
@@ -1205,15 +1213,22 @@ def handle_agent_transfer_room(data):
     print(f"   Connected agents: {len(connected_agents)}")
     print(f"{'='*60}\n")
     
-    # Notify all available agents about the incoming call
+    # Find the FIRST available agent and notify only them
+    customer_sid = request.sid  # Store customer's socket ID for WebRTC
+    agent_notified = False
+    
     for agent_sid, agent_info in connected_agents.items():
         if agent_info.get('status') == 'available':
             print(f"   📤 Notifying agent: {agent_info.get('agent_id')} (socket: {agent_sid})")
+            # Mark this agent as busy immediately to prevent double-assignment
+            connected_agents[agent_sid]['status'] = 'connecting'
+            
             socketio.emit('agent_incoming_call', {
                 'session_id': session_id,
                 'room_name': room_name,
                 'room_url': room_url,
                 'reason': reason,
+                'customer_sid': customer_sid,  # For WebRTC signaling
                 'customer_info': {
                     'name': 'Customer',
                     'wait_time': 0
@@ -1221,18 +1236,25 @@ def handle_agent_transfer_room(data):
                 'timestamp': datetime.now().isoformat()
             }, to=agent_sid)
             print(f"   ✅ Notification sent to agent {agent_info.get('agent_id')}")
+            agent_notified = True
+            break  # Only notify ONE agent
     
-    # If no agents available, log a warning
-    available_agents = [a for a in connected_agents.values() if a.get('status') == 'available']
-    if not available_agents:
+    # If no agents available, log a warning and notify customer
+    if not agent_notified:
         print("⚠️ WARNING: No available agents to handle transfer!")
+        # Notify customer that no agents are available
+        emit('no_agents_available', {
+            'message': 'All agents are currently busy. Please wait or try again shortly.',
+            'session_id': session_id
+        })
 
 
 @socketio.on('agent_joined_call')
 def handle_agent_joined_call(data):
-    """When agent joins a transferred call."""
+    """When agent joins a transferred call, notify customer to start WebRTC."""
     session_id = data.get('session_id')
     room_name = data.get('room_name')
+    customer_sid = data.get('customer_sid')
     
     if request.sid in connected_agents:
         connected_agents[request.sid]['status'] = 'in_call'
@@ -1240,10 +1262,22 @@ def handle_agent_joined_call(data):
         
         agent_id = connected_agents[request.sid].get('agent_id')
         print(f"✅ Agent {agent_id} joined call for session {session_id}")
+        print(f"   Customer SID: {customer_sid}, Agent SID: {request.sid}")
+        
+        # Notify customer that agent has joined - include agent's socket ID for WebRTC
+        if customer_sid:
+            socketio.emit('agent_ready_for_call', {
+                'session_id': session_id,
+                'agent_sid': request.sid,
+                'agent_id': agent_id,
+                'message': 'Agent is ready. Connecting audio...'
+            }, to=customer_sid)
+            print(f"   📤 Notified customer to start WebRTC connection")
         
         emit('agent_call_joined', {
             'session_id': session_id,
             'room_name': room_name,
+            'customer_sid': customer_sid,
             'message': 'Successfully joined the call'
         })
 
@@ -1264,6 +1298,96 @@ def handle_agent_ended_call(data):
             'session_id': session_id,
             'message': 'Call ended successfully'
         })
+
+
+# =============================================================================
+# WEBRTC SIGNALING FOR CUSTOMER-AGENT CALLS
+# =============================================================================
+
+# Track active WebRTC sessions: {session_id: {'customer_sid': ..., 'agent_sid': ...}}
+active_webrtc_sessions = {}
+
+
+@socketio.on('webrtc_offer')
+def handle_webrtc_offer(data):
+    """Forward WebRTC offer from customer to agent."""
+    session_id = data.get('session_id')
+    offer = data.get('offer')
+    target_sid = data.get('target_sid')
+    
+    print(f"📡 WebRTC Offer from {request.sid} for session {session_id}")
+    
+    if target_sid:
+        socketio.emit('webrtc_offer', {
+            'session_id': session_id,
+            'offer': offer,
+            'from_sid': request.sid
+        }, to=target_sid)
+
+
+@socketio.on('webrtc_answer')
+def handle_webrtc_answer(data):
+    """Forward WebRTC answer from agent to customer."""
+    session_id = data.get('session_id')
+    answer = data.get('answer')
+    target_sid = data.get('target_sid')
+    
+    print(f"📡 WebRTC Answer from {request.sid} for session {session_id}")
+    
+    if target_sid:
+        socketio.emit('webrtc_answer', {
+            'session_id': session_id,
+            'answer': answer,
+            'from_sid': request.sid
+        }, to=target_sid)
+
+
+@socketio.on('webrtc_ice_candidate')
+def handle_webrtc_ice_candidate(data):
+    """Forward ICE candidates between peers."""
+    session_id = data.get('session_id')
+    candidate = data.get('candidate')
+    target_sid = data.get('target_sid')
+    
+    if target_sid:
+        socketio.emit('webrtc_ice_candidate', {
+            'session_id': session_id,
+            'candidate': candidate,
+            'from_sid': request.sid
+        }, to=target_sid)
+
+
+@socketio.on('webrtc_hangup')
+def handle_webrtc_hangup(data):
+    """Handle call hangup."""
+    session_id = data.get('session_id')
+    target_sid = data.get('target_sid')
+    
+    print(f"📴 WebRTC Hangup for session {session_id}")
+    
+    if target_sid:
+        socketio.emit('webrtc_hangup', {
+            'session_id': session_id,
+            'from_sid': request.sid
+        }, to=target_sid)
+
+
+@socketio.on('call_transcript')
+def handle_call_transcript(data):
+    """Receive and forward transcription between customer and agent."""
+    session_id = data.get('session_id')
+    text = data.get('text')
+    speaker = data.get('speaker')  # 'customer' or 'agent'
+    target_sid = data.get('target_sid')
+    
+    # Forward to the other party
+    if target_sid:
+        socketio.emit('call_transcript', {
+            'session_id': session_id,
+            'text': text,
+            'speaker': speaker,
+            'timestamp': datetime.now().isoformat()
+        }, to=target_sid)
 
 
 # =============================================================================

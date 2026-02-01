@@ -96,6 +96,29 @@ function initializeSocket() {
             console.error('❌ ERROR handling transfer_call:', error);
         }
     });
+    
+    // =========================================================================
+    // NO AGENTS AVAILABLE HANDLER: When no human agents are available
+    // =========================================================================
+    socket.on('no_agents_available', (data) => {
+        console.log('⚠️ No agents available:', data);
+        updateStatus('waiting', 'Waiting for agent...');
+        
+        // Add notice to transcript
+        const transcriptEl = document.getElementById('transcript');
+        if (transcriptEl) {
+            const notice = document.createElement('div');
+            notice.className = 'transcript-entry';
+            notice.innerHTML = `
+                <div style="text-align: center; padding: 16px; background: rgba(251, 191, 36, 0.1); border-radius: 12px; margin: 16px 0; border: 1px solid rgba(251, 191, 36, 0.3);">
+                    <span style="font-size: 24px;">⏳</span>
+                    <div style="color: #fbbf24; font-weight: 600; margin-top: 8px;">${data.message || 'All agents are busy. Please wait...'}</div>
+                </div>
+            `;
+            transcriptEl.appendChild(notice);
+            transcriptEl.scrollTop = transcriptEl.scrollHeight;
+        }
+    });
 
     socket.on('call_ended', (data) => {
         console.log('Call ended:', data);
@@ -562,6 +585,8 @@ function showJitsiFallbackModal(jitsiUrl) {
     document.body.appendChild(modal);
     console.log('✅ Fallback modal displayed');
 }
+
+/**
  * Copy room link to clipboard
  */
 function copyRoomLink(url) {

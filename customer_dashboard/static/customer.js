@@ -988,95 +988,129 @@ function initVoiceCall() {
 
     voiceSocket.on('transfer_call', (data) => {
         console.log('Transferring to live agent:', data);
-        showToast(data.message || 'Transferring to live agent...', 'info');
+        showToast(data.message || 'Connecting to live agent...', 'info');
         
-        // --- SEAMLESS AUDIO HANDOFF ---
-        // 1. Stop AI Speech Recognition
+        // Store session info for WebRTC
+        window.transferSessionId = data.session_id;
+        window.transferReason = data.reason;
+        
+        // Stop AI Speech Recognition - we'll use a new one for the human call
         if (voiceRecognition) {
             try { voiceRecognition.stop(); } catch(e){}
             voiceRecognition = null;
         }
 
-        // 2. Update Voice UI to show "Live Agent" state
-        // Don't hide the interface! Reuse it.
+        // Update Voice UI to show "Live Agent" state
         const avatar = document.getElementById('voice-avatar');
         if (avatar) {
-            avatar.innerHTML = '<span>👤</span>'; // Change robot to human icon
-            avatar.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)'; // Blue background for human
+            avatar.innerHTML = '<span>👤</span>';
+            avatar.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
         }
-         const agentName = document.querySelector('.agent-details h4');
+        const agentName = document.querySelector('.agent-details h4');
         if (agentName) agentName.textContent = "Live Support Agent";
 
         const agentStatus = document.querySelector('.agent-details .agent-status');
-        if (agentStatus) agentStatus.textContent = "Connecting Audio...";
+        if (agentStatus) agentStatus.textContent = "Finding available agent...";
         
-        // 3. Setup Jitsi (Audio Only)
-        // We reuse the existing video container but make it tiny/hidden or overlay
-        // NOTE: We need the user to potentially approve mic, so we can't completely hide the iframe 
-        // until permissions are stable, but let's try a minimal seamless integration.
-        // We'll put it in a container that replaces the "avatar" or is just invisible if permission is already there.
-        // For now, we'll put it in the dedicated container but style it.
-
-        const videoContainer = document.getElementById('live-agent-video');
-        if (videoContainer) {
-            videoContainer.classList.remove('hidden');
-            // Hide the video element specifically via CSS or inline style to avoid big black box
-            // We want it to look like a voice call.
-            videoContainer.style.height = '0px'; 
-            videoContainer.style.overflow = 'hidden';
-            videoContainer.style.opacity = '0'; // Hide it visually but keep it in DOM
-            
-            // Generate Room URL with Audio Only Config - use alphanumeric name to avoid lobby
-            const roomName = `bsmart${data.session_id}${Date.now()}`;
-            // Build URL with all config params to skip prejoin and enable audio
-            const roomUrl = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&config.startAudioOnly=true&userInfo.displayName="Customer"`;
-            
-            console.log('🔊 Creating Jitsi room:', roomName);
-            console.log('🔗 Room URL:', roomUrl);
-
-            // Open Jitsi in a new tab (required for WebRTC on non-HTTPS pages)
-            window.jitsiWindow = window.open(roomUrl, '_blank', 'width=800,height=600');
-            
-            if (window.jitsiWindow) {
-                console.log('✅ Jitsi window opened successfully');
-                showToast('Voice call opened in new tab. Please allow microphone access.', 'info');
-                
-                if (agentStatus) agentStatus.textContent = "Call opened in new tab";
-                
-                // Check periodically if the window is closed
-                const checkWindow = setInterval(() => {
-                    if (window.jitsiWindow && window.jitsiWindow.closed) {
-                        console.log('📴 Jitsi window was closed');
-                        clearInterval(checkWindow);
-                        if (agentStatus) agentStatus.textContent = "Call ended";
-                        showToast('Voice call ended', 'info');
-                    }
-                }, 2000);
-            } else {
-                console.error('❌ Failed to open Jitsi window - popup blocked?');
-                showToast('Please allow popups to open the voice call', 'warning');
-                
-                // Show a manual link as fallback
-                const jitsiContainer = document.getElementById('jitsi-meet-container');
-                if (jitsiContainer) {
-                    jitsiContainer.innerHTML = `
-                        <div style="padding: 20px; text-align: center;">
-                            <p>Click below to join the voice call:</p>
-                            <a href="${roomUrl}" target="_blank" style="color: #10b981; font-size: 18px;">Join Call</a>
-                        </div>`;
-                }
-            }
-
-            // Notify server that room is ready so agent can join
-            console.log('📤 Emitting agent_transfer_room event...');
-            voiceSocket.emit('agent_transfer_room', {
-                room_url: roomUrl,
-                room_name: roomName,
-                session_id: data.session_id,
-                reason: data.reason
-            });
-            console.log('✅ agent_transfer_room emitted with room:', roomName);
+        // Show transcript container for the human call
+        showTransferTranscript();
+        
+        // Notify server to find an agent - include a simple room identifier
+        const roomName = `webrtc_${data.session_id}_${Date.now()}`;
+        console.log('📤 Requesting agent transfer...');
+        voiceSocket.emit('agent_transfer_room', {
+            room_url: roomName,  // Not a real URL, just an identifier
+            room_name: roomName,
+            session_id: data.session_id,
+            reason: data.reason
+        });
+    });
+    
+    // =========================================================================
+    // WEBRTC HANDLERS FOR SEAMLESS VOICE CONNECTION
+    // =========================================================================
+    
+    // When agent is ready, start WebRTC connection
+    voiceSocket.on('agent_ready_for_call', async (data) => {
+        console.log('🎯 Agent ready for call:', data);
+        
+        // Ignore if we already have an active WebRTC connection (multiple agents responded)
+        if (window.peerConnection) {
+            console.log('⚠️ Ignoring - already have an active WebRTC connection');
+            return;
         }
+        
+        showToast('Agent connected! Starting voice call...', 'success');
+        
+        const agentStatus = document.querySelector('.agent-details .agent-status');
+        if (agentStatus) agentStatus.textContent = "Connected to " + (data.agent_id || 'Agent');
+        
+        // Store agent socket ID for signaling
+        window.agentSocketId = data.agent_sid;
+        window.transferSessionId = data.session_id;
+        
+        // Start WebRTC connection as the caller (customer initiates)
+        await startWebRTCCall(data.agent_sid, data.session_id);
+    });
+    
+    // Handle WebRTC answer from agent
+    voiceSocket.on('webrtc_answer', async (data) => {
+        console.log('📡 Received WebRTC answer from agent');
+        if (window.peerConnection && data.answer) {
+            try {
+                await window.peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                console.log('✅ Remote description set successfully');
+                
+                // Process any pending ICE candidates
+                if (window.pendingIceCandidates && window.pendingIceCandidates.length > 0) {
+                    console.log(`📡 Processing ${window.pendingIceCandidates.length} pending ICE candidates`);
+                    for (const candidate of window.pendingIceCandidates) {
+                        try {
+                            await window.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                        } catch (e) {
+                            console.error('Error adding queued ICE candidate:', e);
+                        }
+                    }
+                    window.pendingIceCandidates = [];
+                }
+            } catch (e) {
+                console.error('Error setting remote description:', e);
+            }
+        }
+    });
+    
+    // Queue for ICE candidates that arrive before remote description is set
+    window.pendingIceCandidates = [];
+    
+    // Handle ICE candidates from agent
+    voiceSocket.on('webrtc_ice_candidate', async (data) => {
+        if (data.candidate) {
+            // Check if peer connection exists and has remote description
+            if (window.peerConnection && window.peerConnection.remoteDescription) {
+                try {
+                    await window.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                } catch (e) {
+                    console.error('Error adding ICE candidate:', e);
+                }
+            } else {
+                // Queue the candidate for later
+                console.log('⏳ Queuing ICE candidate (remote description not set yet)');
+                window.pendingIceCandidates.push(data.candidate);
+            }
+        }
+    });
+    
+    // Handle hangup from agent
+    voiceSocket.on('webrtc_hangup', (data) => {
+        console.log('📴 Agent ended the call');
+        endWebRTCCall();
+        showToast('Agent ended the call', 'info');
+    });
+    
+    // Receive transcripts from agent
+    voiceSocket.on('call_transcript', (data) => {
+        console.log('📝 Received transcript:', data);
+        addTransferTranscriptEntry(data.speaker, data.text);
     });
 
     voiceSocket.on('call_ended', (data) => {
@@ -1109,6 +1143,16 @@ function initVoiceCall() {
     voiceSocket.on('error', (data) => {
         console.error('Voice error:', data.message);
         showToast('Error: ' + data.message, 'error');
+    });
+    
+    // Handle no agents available
+    voiceSocket.on('no_agents_available', (data) => {
+        console.log('⚠️ No agents available:', data);
+        showToast(data.message || 'All agents are busy. Please wait...', 'warning');
+        
+        // Update avatar status
+        const agentStatus = document.querySelector('.agent-details .agent-status');
+        if (agentStatus) agentStatus.textContent = "Waiting for agent...";
     });
 
     voiceSocket.on('disconnect', () => {
@@ -1334,4 +1378,284 @@ function formatVoiceTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+// =============================================================================
+// WEBRTC FUNCTIONS FOR CUSTOMER-AGENT VOICE CALLS
+// =============================================================================
+
+/**
+ * Start WebRTC call to agent
+ */
+async function startWebRTCCall(agentSocketId, sessionId) {
+    console.log('🎙️ Starting WebRTC call to agent:', agentSocketId);
+    
+    // Check if mediaDevices is available (requires HTTPS or localhost)
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('❌ getUserMedia not available - need HTTPS or localhost');
+        showToast('Microphone access requires a secure connection (localhost or HTTPS)', 'error');
+        const agentStatus = document.querySelector('.agent-details .agent-status');
+        if (agentStatus) agentStatus.textContent = "Connection error - need HTTPS";
+        return;
+    }
+    
+    try {
+        // Get user's microphone
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        window.localStream = stream;
+        console.log('✅ Got local audio stream');
+        
+        // Create peer connection with STUN servers
+        const config = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ]
+        };
+        
+        window.peerConnection = new RTCPeerConnection(config);
+        
+        // Add local audio track to connection
+        stream.getTracks().forEach(track => {
+            window.peerConnection.addTrack(track, stream);
+        });
+        
+        // Handle incoming audio from agent
+        window.peerConnection.ontrack = (event) => {
+            console.log('🔊 Received remote audio stream from agent');
+            const remoteAudio = document.getElementById('remote-agent-audio') || createRemoteAudio();
+            remoteAudio.srcObject = event.streams[0];
+            remoteAudio.play().catch(e => console.log('Auto-play blocked:', e));
+        };
+        
+        // Handle ICE candidates
+        window.peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                voiceSocket.emit('webrtc_ice_candidate', {
+                    session_id: sessionId,
+                    candidate: event.candidate,
+                    target_sid: agentSocketId
+                });
+            }
+        };
+        
+        // Connection state changes
+        window.peerConnection.onconnectionstatechange = () => {
+            console.log('WebRTC connection state:', window.peerConnection.connectionState);
+            const agentStatus = document.querySelector('.agent-details .agent-status');
+            
+            switch (window.peerConnection.connectionState) {
+                case 'connected':
+                    if (agentStatus) agentStatus.textContent = "🟢 Connected";
+                    showToast('Voice call connected!', 'success');
+                    // Start speech recognition for transcription
+                    startTransferSpeechRecognition(sessionId, agentSocketId);
+                    break;
+                case 'disconnected':
+                case 'failed':
+                    if (agentStatus) agentStatus.textContent = "🔴 Disconnected";
+                    endWebRTCCall();
+                    break;
+            }
+        };
+        
+        // Create and send offer
+        const offer = await window.peerConnection.createOffer();
+        await window.peerConnection.setLocalDescription(offer);
+        
+        voiceSocket.emit('webrtc_offer', {
+            session_id: sessionId,
+            offer: offer,
+            target_sid: agentSocketId
+        });
+        console.log('📤 Sent WebRTC offer to agent');
+        
+    } catch (error) {
+        console.error('❌ WebRTC Error:', error);
+        showToast('Error accessing microphone: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Create hidden audio element for remote stream
+ */
+function createRemoteAudio() {
+    const audio = document.createElement('audio');
+    audio.id = 'remote-agent-audio';
+    audio.autoplay = true;
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+    return audio;
+}
+
+/**
+ * End WebRTC call
+ */
+function endWebRTCCall() {
+    console.log('📴 Ending WebRTC call');
+    
+    // Stop local stream
+    if (window.localStream) {
+        window.localStream.getTracks().forEach(track => track.stop());
+        window.localStream = null;
+    }
+    
+    // Close peer connection
+    if (window.peerConnection) {
+        window.peerConnection.close();
+        window.peerConnection = null;
+    }
+    
+    // Stop transcription
+    if (window.transferRecognition) {
+        try { window.transferRecognition.stop(); } catch(e) {}
+        window.transferRecognition = null;
+    }
+    
+    // Remove remote audio
+    const remoteAudio = document.getElementById('remote-agent-audio');
+    if (remoteAudio) remoteAudio.remove();
+    
+    // Update UI
+    const agentStatus = document.querySelector('.agent-details .agent-status');
+    if (agentStatus) agentStatus.textContent = "Call ended";
+    
+    // Notify server
+    if (window.agentSocketId && window.transferSessionId) {
+        voiceSocket.emit('webrtc_hangup', {
+            session_id: window.transferSessionId,
+            target_sid: window.agentSocketId
+        });
+    }
+    
+    // Hide transcript container after a delay
+    setTimeout(() => {
+        const transcriptContainer = document.getElementById('transfer-transcript-container');
+        if (transcriptContainer) transcriptContainer.remove();
+    }, 3000);
+}
+
+/**
+ * Start speech recognition for transcription during transfer call
+ */
+function startTransferSpeechRecognition(sessionId, agentSocketId) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        console.warn('Speech Recognition not supported');
+        return;
+    }
+    
+    window.transferRecognition = new SpeechRecognition();
+    window.transferRecognition.continuous = true;
+    window.transferRecognition.interimResults = false;
+    window.transferRecognition.lang = 'en-IN';
+    
+    window.transferRecognition.onresult = (event) => {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+                const text = event.results[i][0].transcript.trim();
+                if (text) {
+                    console.log('🎤 Customer said:', text);
+                    // Add to local transcript
+                    addTransferTranscriptEntry('customer', text);
+                    // Send to agent
+                    voiceSocket.emit('call_transcript', {
+                        session_id: sessionId,
+                        text: text,
+                        speaker: 'customer',
+                        target_sid: agentSocketId
+                    });
+                }
+            }
+        }
+    };
+    
+    window.transferRecognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        if (event.error !== 'no-speech') {
+            // Try to restart
+            setTimeout(() => {
+                if (window.transferRecognition && window.peerConnection?.connectionState === 'connected') {
+                    try { window.transferRecognition.start(); } catch(e) {}
+                }
+            }, 1000);
+        }
+    };
+    
+    window.transferRecognition.onend = () => {
+        // Restart if still in call
+        if (window.peerConnection?.connectionState === 'connected') {
+            try { window.transferRecognition.start(); } catch(e) {}
+        }
+    };
+    
+    try {
+        window.transferRecognition.start();
+        console.log('🎤 Started transcription for transfer call');
+    } catch(e) {
+        console.error('Failed to start speech recognition:', e);
+    }
+}
+
+/**
+ * Show transcript container for transfer call
+ */
+function showTransferTranscript() {
+    // Check if already exists
+    if (document.getElementById('transfer-transcript-container')) return;
+    
+    const container = document.createElement('div');
+    container.id = 'transfer-transcript-container';
+    container.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        right: 20px;
+        width: 350px;
+        max-height: 300px;
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 12px;
+        overflow: hidden;
+        z-index: 1000;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    `;
+    
+    container.innerHTML = `
+        <div style="padding: 12px 16px; background: linear-gradient(135deg, #3b82f6, #2563eb); display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: white; font-weight: 600;">📝 Live Transcript</span>
+            <button onclick="endWebRTCCall()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">End Call</button>
+        </div>
+        <div id="transfer-transcript" style="padding: 12px; max-height: 250px; overflow-y: auto; font-size: 13px;"></div>
+    `;
+    
+    document.body.appendChild(container);
+}
+
+/**
+ * Add entry to transfer transcript
+ */
+function addTransferTranscriptEntry(speaker, text) {
+    const transcript = document.getElementById('transfer-transcript');
+    if (!transcript) return;
+    
+    const entry = document.createElement('div');
+    entry.style.cssText = `
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: ${speaker === 'customer' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)'};
+        border-left: 3px solid ${speaker === 'customer' ? '#10b981' : '#3b82f6'};
+    `;
+    
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    entry.innerHTML = `
+        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">
+            ${speaker === 'customer' ? '👤 You' : '🎧 Agent'} • ${time}
+        </div>
+        <div style="color: #e2e8f0;">${text}</div>
+    `;
+    
+    transcript.appendChild(entry);
+    transcript.scrollTop = transcript.scrollHeight;
 }

@@ -1,0 +1,26 @@
+{
+  "session_id": "6e1ecc27",
+  "agent_name": "Priya",
+  "start_time": "2026-02-01T06:34:57.683516",
+  "end_time": "2026-02-01T06:36:33.003502",
+  "duration_seconds": 95,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-02-01T06:34:57.683582"
+    },
+    {
+      "speaker": "customer",
+      "text": "I want to talk to my age",
+      "timestamp": "2026-02-01T06:35:05.810237"
+    },
+    {
+      "speaker": "agent",
+      "text": "I think you meant to say \"I want to talk to a human age\" or perhaps \"I want to talk to someone my age\", but it seems like there might be a slight misunderstanding. If you're looking to speak with a human representative, I'd be happy to help facilitate that for you. I understand you'd like to speak with a human agent. Let me connect you right away. Please hold for a moment. ||TRANSFER||",
+      "timestamp": "2026-02-01T06:35:06.580717"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: I want to talk to my age\n\nAgent: I think you meant to say \"I want to talk to a human age\" or perhaps \"I want to talk to someone my age\", but it seems like there might be a slight misunderstanding. If you're looking to speak with a human representative, I'd be happy to help facilitate that for you. I understand you'd like to speak with a human agent. Let me connect you right away. Please hold for a moment. ||TRANSFER||",
+  "llm_provider": "groq"
+}

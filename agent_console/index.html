@@ -478,6 +478,59 @@
                 console.log('=' .repeat(60));
                 handleIncomingCall(data);
             });
+            
+            // =========================================================================
+            // WEBRTC SOCKET HANDLERS
+            // =========================================================================
+            
+            // Queue for pending offers (in case offer arrives before peerConnection is ready)
+            window.pendingOffer = null;
+            
+            // Handle WebRTC offer from customer
+            socket.on('webrtc_offer', async (data) => {
+                console.log('📡 Received WebRTC offer from customer');
+                
+                if (window.peerConnection && data.offer) {
+                    await handleWebRTCOffer(data);
+                } else {
+                    // Peer connection not ready yet, queue the offer
+                    console.log('⏳ Peer connection not ready, queuing offer...');
+                    window.pendingOffer = data;
+                }
+            });
+            
+            // Queue for ICE candidates that arrive before remote description is set
+            window.pendingIceCandidates = [];
+            
+            // Handle ICE candidates from customer
+            socket.on('webrtc_ice_candidate', async (data) => {
+                if (data.candidate) {
+                    // Check if peer connection exists and has remote description
+                    if (window.peerConnection && window.peerConnection.remoteDescription) {
+                        try {
+                            await window.peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                        } catch (e) {
+                            console.error('Error adding ICE candidate:', e);
+                        }
+                    } else {
+                        // Queue the candidate for later
+                        console.log('⏳ Queuing ICE candidate (remote description not set yet)');
+                        window.pendingIceCandidates.push(data.candidate);
+                    }
+                }
+            });
+            
+            // Handle hangup from customer
+            socket.on('webrtc_hangup', (data) => {
+                console.log('📴 Customer ended the call');
+                endCall();
+            });
+            
+            // Receive transcripts from customer
+            socket.on('call_transcript', (data) => {
+                console.log('📝 Received transcript from customer:', data);
+                addAgentTranscript(data.speaker, data.text);
+            });
         }
         
         function requestNotificationPermission() {
@@ -525,6 +578,7 @@
                 if (countdown <= 0) {
                     clearInterval(countdownInterval);
                     incomingAlert.classList.remove('active');
+                    ringSound.pause();
                     joinCall(data);
                 }
             }, 1000);
@@ -533,7 +587,9 @@
             addToQueue(data);
         }
         
-        function joinCall(data) {
+        async function joinCall(data) {
+            console.log('🎯 Joining call with data:', data);
+            
             // Update status
             updateStatus('in-call', 'In Call');
             statusBadge.classList.remove('waiting');
@@ -543,60 +599,283 @@
             waitingState.style.display = 'none';
             callPanel.classList.add('active');
             
-            // Clear container and show instructions
-            jitsiContainer.innerHTML = '';
+            // Store call data
+            currentCall = data;
+            window.customerSocketId = data.customer_sid;
             
-            const roomName = data.room_name || `bsmart${data.session_id}${Date.now()}`;
-            // Build URL with config to skip prejoin
-            const roomUrl = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&userInfo.displayName="Support Agent"`;
-            
-            console.log('🔗 Agent joining room:', roomName);
-            console.log('🔗 Room URL:', roomUrl);
-            
-            // Open Jitsi in a new tab (required for WebRTC on non-HTTPS pages)
-            window.agentJitsiWindow = window.open(roomUrl, '_blank', 'width=900,height=700');
-            
-            if (window.agentJitsiWindow) {
-                console.log('✅ Agent Jitsi window opened successfully');
-                jitsiContainer.innerHTML = `
-                    <div style="padding: 40px; text-align: center;">
-                        <div style="font-size: 64px; margin-bottom: 20px;">📞</div>
-                        <h3 style="color: #10b981; margin-bottom: 12px;">Call Opened in New Tab</h3>
-                        <p style="color: #94a3b8; margin-bottom: 20px;">The voice call is running in a separate window.</p>
-                        <p style="color: #64748b; font-size: 14px;">Close that window or click "End Call" to finish.</p>
-                    </div>`;
-                
-                // Check periodically if the window is closed
-                const checkWindow = setInterval(() => {
-                    if (window.agentJitsiWindow && window.agentJitsiWindow.closed) {
-                        console.log('📴 Agent Jitsi window was closed');
-                        clearInterval(checkWindow);
-                        endCall();
-                    }
-                }, 2000);
-            } else {
-                console.error('❌ Failed to open Jitsi window - popup blocked?');
-                jitsiContainer.innerHTML = `
-                    <div style="padding: 40px; text-align: center;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-                        <h3 style="color: #fbbf24; margin-bottom: 12px;">Popup Blocked</h3>
-                        <p style="color: #94a3b8; margin-bottom: 20px;">Please allow popups and click below to join:</p>
-                        <a href="${roomUrl}" target="_blank" 
-                           style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                           Join Call
-                        </a>
-                    </div>`;
-            }
+            // Show connecting UI
+            jitsiContainer.innerHTML = `
+                <div style="padding: 40px; text-align: center;">
+                    <div style="font-size: 64px; margin-bottom: 20px; animation: pulse 1s infinite;">📞</div>
+                    <h3 style="color: #10b981; margin-bottom: 12px;">Connecting to Customer...</h3>
+                    <p style="color: #94a3b8;">Setting up secure audio connection</p>
+                </div>
+                <style>@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }</style>
+            `;
             
             // Start duration timer
             callStartTime = Date.now();
             durationInterval = setInterval(updateDuration, 1000);
             
-            // Notify server that agent joined
+            // Notify server that agent joined - this will trigger customer to send WebRTC offer
             socket.emit('agent_joined_call', {
                 session_id: data.session_id,
-                room_name: data.room_name
+                room_name: data.room_name,
+                customer_sid: data.customer_sid
             });
+            
+            // Setup WebRTC to receive call
+            await setupWebRTCReceiver(data);
+        }
+        
+        // =============================================================================
+        // WEBRTC FOR AGENT
+        // =============================================================================
+        
+        async function setupWebRTCReceiver(data) {
+            console.log('🎙️ Setting up WebRTC receiver for customer call');
+            
+            // Check if mediaDevices is available (requires HTTPS or localhost)
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                console.error('❌ getUserMedia not available - need HTTPS or localhost');
+                jitsiContainer.innerHTML = `
+                    <div style="padding: 40px; text-align: center;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+                        <h3 style="color: #fbbf24; margin-bottom: 12px;">Secure Connection Required</h3>
+                        <p style="color: #94a3b8; margin-bottom: 16px;">Microphone access requires a secure connection.</p>
+                        <p style="color: #64748b; font-size: 13px;">Please access this page using:</p>
+                        <code style="display: block; background: rgba(0,0,0,0.3); padding: 8px 16px; border-radius: 6px; margin-top: 8px; color: #10b981;">http://localhost:5000/agent-console/</code>
+                    </div>`;
+                return;
+            }
+            
+            try {
+                // Get agent's microphone
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                window.localStream = stream;
+                console.log('✅ Got local audio stream');
+                
+                // Create peer connection
+                const config = {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' }
+                    ]
+                };
+                
+                window.peerConnection = new RTCPeerConnection(config);
+                
+                // Add local audio track
+                stream.getTracks().forEach(track => {
+                    window.peerConnection.addTrack(track, stream);
+                });
+                
+                // Handle incoming audio from customer
+                window.peerConnection.ontrack = (event) => {
+                    console.log('🔊 Received audio from customer');
+                    const remoteAudio = document.getElementById('remote-customer-audio') || createRemoteAudio();
+                    remoteAudio.srcObject = event.streams[0];
+                    remoteAudio.play().catch(e => console.log('Auto-play blocked:', e));
+                };
+                
+                // Handle ICE candidates
+                window.peerConnection.onicecandidate = (event) => {
+                    if (event.candidate && data.customer_sid) {
+                        socket.emit('webrtc_ice_candidate', {
+                            session_id: data.session_id,
+                            candidate: event.candidate,
+                            target_sid: data.customer_sid
+                        });
+                    }
+                };
+                
+                // Connection state changes
+                window.peerConnection.onconnectionstatechange = () => {
+                    console.log('WebRTC connection state:', window.peerConnection.connectionState);
+                    
+                    switch (window.peerConnection.connectionState) {
+                        case 'connected':
+                            updateCallUI('connected');
+                            startAgentSpeechRecognition(data);
+                            break;
+                        case 'disconnected':
+                        case 'failed':
+                            endCall();
+                            break;
+                    }
+                };
+                
+                console.log('✅ Peer connection created, checking for pending offer...');
+                
+                // Process any pending offer that arrived before peer connection was ready
+                if (window.pendingOffer) {
+                    console.log('📡 Processing pending WebRTC offer');
+                    await handleWebRTCOffer(window.pendingOffer);
+                    window.pendingOffer = null;
+                }
+                
+            } catch (error) {
+                console.error('❌ WebRTC setup error:', error);
+                jitsiContainer.innerHTML = `
+                    <div style="padding: 40px; text-align: center;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">❌</div>
+                        <h3 style="color: #ef4444; margin-bottom: 12px;">Microphone Error</h3>
+                        <p style="color: #94a3b8;">${error.message}</p>
+                    </div>`;
+            }
+        }
+        
+        // Handle WebRTC offer from customer
+        async function handleWebRTCOffer(data) {
+            try {
+                console.log('🔄 Processing WebRTC offer...');
+                await window.peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                console.log('✅ Remote description set successfully');
+                
+                // Process any pending ICE candidates
+                if (window.pendingIceCandidates && window.pendingIceCandidates.length > 0) {
+                    console.log(`📡 Processing ${window.pendingIceCandidates.length} pending ICE candidates`);
+                    for (const candidate of window.pendingIceCandidates) {
+                        try {
+                            await window.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                        } catch (e) {
+                            console.error('Error adding queued ICE candidate:', e);
+                        }
+                    }
+                    window.pendingIceCandidates = [];
+                }
+                
+                const answer = await window.peerConnection.createAnswer();
+                await window.peerConnection.setLocalDescription(answer);
+                
+                socket.emit('webrtc_answer', {
+                    session_id: data.session_id,
+                    answer: answer,
+                    target_sid: data.from_sid
+                });
+                console.log('📤 Sent WebRTC answer to customer');
+                
+                // Store customer socket ID
+                window.customerSocketId = data.from_sid;
+                
+            } catch (e) {
+                console.error('Error handling WebRTC offer:', e);
+            }
+        }
+        
+        function createRemoteAudio() {
+            const audio = document.createElement('audio');
+            audio.id = 'remote-customer-audio';
+            audio.autoplay = true;
+            audio.style.display = 'none';
+            document.body.appendChild(audio);
+            return audio;
+        }
+        
+        function updateCallUI(state) {
+            if (state === 'connected') {
+                jitsiContainer.innerHTML = `
+                    <div style="padding: 20px;">
+                        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+                            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 28px;">👤</span>
+                            </div>
+                            <div>
+                                <h3 style="color: white; margin: 0;">Customer</h3>
+                                <div style="color: #10b981; font-size: 14px;">🟢 Voice Connected</div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(15, 23, 42, 0.8); border-radius: 12px; padding: 16px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                            <div style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">📝 Live Transcript</div>
+                            <div id="agent-transcript" style="max-height: 300px; overflow-y: auto; font-size: 14px;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        function startAgentSpeechRecognition(data) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                console.warn('Speech Recognition not supported');
+                return;
+            }
+            
+            window.agentRecognition = new SpeechRecognition();
+            window.agentRecognition.continuous = true;
+            window.agentRecognition.interimResults = false;
+            window.agentRecognition.lang = 'en-IN';
+            
+            window.agentRecognition.onresult = (event) => {
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        const text = event.results[i][0].transcript.trim();
+                        if (text) {
+                            console.log('🎤 Agent said:', text);
+                            addAgentTranscript('agent', text);
+                            // Send to customer
+                            if (data.customer_sid) {
+                                socket.emit('call_transcript', {
+                                    session_id: data.session_id,
+                                    text: text,
+                                    speaker: 'agent',
+                                    target_sid: data.customer_sid
+                                });
+                            }
+                        }
+                    }
+                }
+            };
+            
+            window.agentRecognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error !== 'no-speech') {
+                    setTimeout(() => {
+                        if (window.agentRecognition && window.peerConnection?.connectionState === 'connected') {
+                            try { window.agentRecognition.start(); } catch(e) {}
+                        }
+                    }, 1000);
+                }
+            };
+            
+            window.agentRecognition.onend = () => {
+                if (window.peerConnection?.connectionState === 'connected') {
+                    try { window.agentRecognition.start(); } catch(e) {}
+                }
+            };
+            
+            try {
+                window.agentRecognition.start();
+                console.log('🎤 Started agent speech recognition');
+            } catch(e) {
+                console.error('Failed to start speech recognition:', e);
+            }
+        }
+        
+        function addAgentTranscript(speaker, text) {
+            const transcript = document.getElementById('agent-transcript');
+            if (!transcript) return;
+            
+            const entry = document.createElement('div');
+            entry.style.cssText = `
+                margin-bottom: 8px;
+                padding: 8px 12px;
+                border-radius: 8px;
+                background: ${speaker === 'agent' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)'};
+                border-left: 3px solid ${speaker === 'agent' ? '#3b82f6' : '#10b981'};
+            `;
+            
+            const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            entry.innerHTML = `
+                <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">
+                    ${speaker === 'agent' ? '🎧 You' : '👤 Customer'} • ${time}
+                </div>
+                <div style="color: #e2e8f0;">${text}</div>
+            `;
+            
+            transcript.appendChild(entry);
+            transcript.scrollTop = transcript.scrollHeight;
         }
         
         function updateDuration() {
@@ -609,27 +888,41 @@
         }
         
         function endCall() {
+            console.log('📴 Ending call');
+            
             // Clear timer
             if (durationInterval) {
                 clearInterval(durationInterval);
                 durationInterval = null;
             }
             
-            // Close Jitsi window if open
-            if (window.agentJitsiWindow && !window.agentJitsiWindow.closed) {
-                try {
-                    window.agentJitsiWindow.close();
-                } catch (e) {}
+            // Stop WebRTC
+            if (window.localStream) {
+                window.localStream.getTracks().forEach(track => track.stop());
+                window.localStream = null;
             }
-            window.agentJitsiWindow = null;
             
-            // Dispose Jitsi API (legacy, kept for safety)
-            if (jitsiApi) {
-                try {
-                    jitsiApi.dispose(); 
-                } catch (e) {}
-                jitsiApi = null;
+            if (window.peerConnection) {
+                // Notify customer before closing
+                if (window.customerSocketId && currentCall) {
+                    socket.emit('webrtc_hangup', {
+                        session_id: currentCall.session_id,
+                        target_sid: window.customerSocketId
+                    });
+                }
+                window.peerConnection.close();
+                window.peerConnection = null;
             }
+            
+            // Stop speech recognition
+            if (window.agentRecognition) {
+                try { window.agentRecognition.stop(); } catch(e) {}
+                window.agentRecognition = null;
+            }
+            
+            // Remove remote audio
+            const remoteAudio = document.getElementById('remote-customer-audio');
+            if (remoteAudio) remoteAudio.remove();
             
             // Clear Jitsi container
             jitsiContainer.innerHTML = '';
@@ -652,6 +945,7 @@
             
             currentCall = null;
             callStartTime = null;
+            window.customerSocketId = null;
         }
         
         function updateStatus(status, text) {
