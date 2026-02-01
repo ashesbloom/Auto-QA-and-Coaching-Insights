@@ -4,6 +4,45 @@ Comprehensive configuration for Battery Smart call evaluation.
 Includes scoring weights, keywords, SOPs, and complaint categories.
 """
 
+import os
+
+# =============================================================================
+# HUMAN AGENT TRANSFER CONFIGURATION (Jitsi Meet)
+# =============================================================================
+# When AI cannot resolve a query, customers are connected to human agents
+# via Jitsi Meet video/audio rooms. Agent Console auto-joins when notified.
+#
+# Agent Console URL: http://localhost:5000/agent-console
+# =============================================================================
+
+# Triggers that indicate customer wants human agent
+TRANSFER_TRIGGER_PHRASES = [
+    "talk to human",
+    "speak to human", 
+    "human agent",
+    "real person",
+    "talk to someone",
+    "speak to someone",
+    "transfer me",
+    "connect me to agent",
+    "customer care",
+    "supervisor",
+    "manager",
+    "representative",
+    "real agent"
+]
+
+# Scenarios where AI should auto-transfer (agent decides)
+TRANSFER_SCENARIOS = [
+    "legal_dispute",
+    "physical_injury", 
+    "vehicle_accident",
+    "fraud_complaint",
+    "police_case",
+    "refund_above_limit",
+    "repeated_unresolved_issue"
+]
+
 # =============================================================================
 # SCORING WEIGHTS (Five-Pillar Framework)
 # =============================================================================

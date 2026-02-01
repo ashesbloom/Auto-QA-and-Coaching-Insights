@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Console - Battery Smart</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            font-size: 32px;
+        }
+        
+        .logo-text h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .logo-text span {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+        }
+        
+        .status-badge.waiting {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+        
+        .status-badge.waiting .status-dot {
+            background: #fbbf24;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-badge.in-call {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-badge.in-call .status-dot {
+            background: #10b981;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* Waiting state */
+        .waiting-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .waiting-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .waiting-state h2 {
+            font-size: 28px;
+            margin-bottom: 12px;
+            color: #fbbf24;
+        }
+        
+        .waiting-state p {
+            color: #64748b;
+            font-size: 16px;
+            max-width: 400px;
+        }
+        
+        /* Call panel (when in call) */
+        .call-panel {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 16px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            overflow: hidden;
+        }
+        
+        .call-panel.active {
+            display: flex;
+        }
+        
+        .call-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .call-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .call-info .avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .call-info .details h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .call-info .details span {
+            font-size: 13px;
+            color: #10b981;
+        }
+        
+        .call-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+        }
+        
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+        
+        .jitsi-container {
+            flex: 1;
+            min-height: 500px;
+        }
+        
+        .jitsi-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Incoming call alert */
+        .incoming-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: alertPulse 1s infinite;
+        }
+        
+        .incoming-alert.active {
+            display: flex;
+        }
+        
+        @keyframes alertPulse {
+            0%, 100% { background: rgba(0, 0, 0, 0.9); }
+            50% { background: rgba(16, 185, 129, 0.2); }
+        }
+        
+        .incoming-alert .ring-icon {
+            font-size: 100px;
+            animation: ring 0.5s infinite;
+        }
+        
+        @keyframes ring {
+            0%, 100% { transform: rotate(-15deg); }
+            50% { transform: rotate(15deg); }
+        }
+        
+        .incoming-alert h2 {
+            font-size: 32px;
+            margin: 24px 0 12px;
+            color: #10b981;
+        }
+        
+        .incoming-alert p {
+            color: #94a3b8;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .incoming-alert .countdown {
+            font-size: 48px;
+            font-weight: bold;
+            color: #fbbf24;
+            margin: 20px 0;
+        }
+        
+        .incoming-alert .btn-accept {
+            padding: 16px 48px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            animation: pulse 1s infinite;
+        }
+        
+        /* Queue panel */
+        .queue-panel {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 16px;
+        }
+        
+        .queue-panel h3 {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .queue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        
+        .queue-item .time {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .empty-queue {
+            color: #64748b;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <span class="logo-icon">🎧</span>
+                <div class="logo-text">
+                    <h1>Agent Console</h1>
+                    <span>Battery Smart Customer Support</span>
+                </div>
+            </div>
+            <div class="status-badge waiting" id="status-badge">
+                <span class="status-dot"></span>
+                <span id="status-text">Waiting for calls...</span>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Waiting State -->
+            <div class="waiting-state" id="waiting-state">
+                <div class="waiting-icon">🎧</div>
+                <h2>Ready to Assist</h2>
+                <p>Keep this page open. When a customer needs help, you'll be automatically connected.</p>
+                <div style="margin-top: 24px; padding: 16px; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                    <p style="color: #60a5fa; font-size: 13px;">💡 Make sure your microphone is enabled and browser notifications are allowed.</p>
+                </div>
+            </div>
+            
+            <!-- Call Panel (shown when in call) -->
+            <div class="call-panel" id="call-panel">
+                <div class="call-header">
+                    <div class="call-info">
+                        <div class="avatar">👤</div>
+                        <div class="details">
+                            <h3>Customer Call</h3>
+                            <span id="call-duration">● Connected</span>
+                        </div>
+                    </div>
+                    <div class="call-actions">
+                        <button class="btn btn-danger" onclick="endCall()">
+                            📞 End Call
+                        </button>
+                    </div>
+                </div>
+                <div class="jitsi-container" id="jitsi-container">
+                    <!-- Jitsi iframe will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Recent Transfers Queue -->
+            <div class="queue-panel">
+                <h3>📋 Recent Transfers</h3>
+                <div class="queue-list" id="queue-list">
+                    <div class="empty-queue">No recent transfers</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Incoming Call Alert -->
+    <div class="incoming-alert" id="incoming-alert">
+        <div class="ring-icon">📞</div>
+        <h2>Incoming Customer Call!</h2>
+        <p id="alert-reason">Customer requested human assistance</p>
+        <div class="countdown" id="countdown">3</div>
+        <p style="color: #64748b;">Auto-connecting...</p>
+    </div>
+    
+    <!-- Audio for alert -->
+    <audio id="ring-sound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkpOQiX51b2Z0hI+VlI2Df3d0d4GKkJKPiIJ8eHh9hYuPkI2Ignx4eX6Ei4+QjYiCfHh5foWLj5CNiIJ8eHl+hIuPkI2Ignx4eH6Fi4+QjYeCfHh5foWLj5CNh4J8eHl+hYuPkI2Hgnx4eX6Fi4+QjYeCfHh5foWLj5CNh4J8eHl+hYuPkI2Hgnx4eX6Fi4+QjYeCfHh5foWLj5CNh4J8eHl+hYuPkI2Hgnx4" type="audio/wav">
+    </audio>
+    
+    <script src="https://meet.jit.si/external_api.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        // Socket connection
+        let socket = null;
+        let currentCall = null;
+        let jitsiApi = null;
+        let callStartTime = null;
+        let durationInterval = null;
+        
+        // DOM elements
+        const waitingState = document.getElementById('waiting-state');
+        const callPanel = document.getElementById('call-panel');
+        const jitsiContainer = document.getElementById('jitsi-container');
+        const incomingAlert = document.getElementById('incoming-alert');
+        const statusBadge = document.getElementById('status-badge');
+        const statusText = document.getElementById('status-text');
+        const queueList = document.getElementById('queue-list');
+        const ringSound = document.getElementById('ring-sound');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeSocket();
+            requestNotificationPermission();
+        });
+        
+        function initializeSocket() {
+            socket = io(window.location.origin, {
+                transports: ['websocket', 'polling']
+            });
+            
+            socket.on('connect', () => {
+                console.log('✅ Connected to server with socket ID:', socket.id);
+                updateStatus('waiting', 'Registering...');
+                // Register as agent
+                const agentId = 'agent-' + Date.now();
+                console.log('📤 Sending agent_register with ID:', agentId);
+                socket.emit('agent_register', { agent_id: agentId });
+            });
+            
+            socket.on('agent_registered', (data) => {
+                console.log('✅ Agent registration confirmed:', data);
+                updateStatus('waiting', 'Waiting for calls...');
+            });
+            
+            socket.on('disconnect', () => {
+                console.log('❌ Disconnected from server');
+                updateStatus('disconnected', 'Disconnected - Reconnecting...');
+            });
+            
+            // Listen for transfer requests
+            socket.on('agent_incoming_call', (data) => {
+                console.log('='  .repeat(60));
+                console.log('📞 INCOMING CALL RECEIVED!');
+                console.log('   Session ID:', data.session_id);
+                console.log('   Room Name:', data.room_name);
+                console.log('   Room URL:', data.room_url);
+                console.log('   Reason:', data.reason);
+                console.log('   Full data:', JSON.stringify(data, null, 2));
+                console.log('=' .repeat(60));
+                handleIncomingCall(data);
+            });
+        }
+        
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+        
+        function handleIncomingCall(data) {
+            console.log('🔔 handleIncomingCall called with:', data);
+            currentCall = data;
+            
+            // Play alert sound
+            try {
+                ringSound.currentTime = 0;
+                ringSound.play().catch(() => {});
+            } catch (e) {}
+            
+            // Show browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('📞 Customer needs help!', {
+                    body: data.reason === 'customer_request' ? 'Customer requested human agent' : 'AI transferred the call',
+                    icon: '📞',
+                    requireInteraction: true
+                });
+            }
+            
+            // Update alert reason
+            document.getElementById('alert-reason').textContent = 
+                data.reason === 'customer_request' 
+                    ? 'Customer requested to speak with a human' 
+                    : 'AI agent transferred for better assistance';
+            
+            // Show incoming alert with countdown
+            incomingAlert.classList.add('active');
+            
+            let countdown = 3;
+            const countdownEl = document.getElementById('countdown');
+            countdownEl.textContent = countdown;
+            
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                countdownEl.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    incomingAlert.classList.remove('active');
+                    joinCall(data);
+                }
+            }, 1000);
+            
+            // Add to queue
+            addToQueue(data);
+        }
+        
+        function joinCall(data) {
+            // Update status
+            updateStatus('in-call', 'In Call');
+            statusBadge.classList.remove('waiting');
+            statusBadge.classList.add('in-call');
+            
+            // Hide waiting, show call panel
+            waitingState.style.display = 'none';
+            callPanel.classList.add('active');
+            
+            // Clear container and show instructions
+            jitsiContainer.innerHTML = '';
+            
+            const roomName = data.room_name || `bsmart${data.session_id}${Date.now()}`;
+            // Build URL with config to skip prejoin
+            const roomUrl = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&userInfo.displayName="Support Agent"`;
+            
+            console.log('🔗 Agent joining room:', roomName);
+            console.log('🔗 Room URL:', roomUrl);
+            
+            // Open Jitsi in a new tab (required for WebRTC on non-HTTPS pages)
+            window.agentJitsiWindow = window.open(roomUrl, '_blank', 'width=900,height=700');
+            
+            if (window.agentJitsiWindow) {
+                console.log('✅ Agent Jitsi window opened successfully');
+                jitsiContainer.innerHTML = `
+                    <div style="padding: 40px; text-align: center;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">📞</div>
+                        <h3 style="color: #10b981; margin-bottom: 12px;">Call Opened in New Tab</h3>
+                        <p style="color: #94a3b8; margin-bottom: 20px;">The voice call is running in a separate window.</p>
+                        <p style="color: #64748b; font-size: 14px;">Close that window or click "End Call" to finish.</p>
+                    </div>`;
+                
+                // Check periodically if the window is closed
+                const checkWindow = setInterval(() => {
+                    if (window.agentJitsiWindow && window.agentJitsiWindow.closed) {
+                        console.log('📴 Agent Jitsi window was closed');
+                        clearInterval(checkWindow);
+                        endCall();
+                    }
+                }, 2000);
+            } else {
+                console.error('❌ Failed to open Jitsi window - popup blocked?');
+                jitsiContainer.innerHTML = `
+                    <div style="padding: 40px; text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                        <h3 style="color: #fbbf24; margin-bottom: 12px;">Popup Blocked</h3>
+                        <p style="color: #94a3b8; margin-bottom: 20px;">Please allow popups and click below to join:</p>
+                        <a href="${roomUrl}" target="_blank" 
+                           style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                           Join Call
+                        </a>
+                    </div>`;
+            }
+            
+            // Start duration timer
+            callStartTime = Date.now();
+            durationInterval = setInterval(updateDuration, 1000);
+            
+            // Notify server that agent joined
+            socket.emit('agent_joined_call', {
+                session_id: data.session_id,
+                room_name: data.room_name
+            });
+        }
+        
+        function updateDuration() {
+            if (!callStartTime) return;
+            const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+            const mins = Math.floor(elapsed / 60);
+            const secs = elapsed % 60;
+            document.getElementById('call-duration').textContent = 
+                `● ${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function endCall() {
+            // Clear timer
+            if (durationInterval) {
+                clearInterval(durationInterval);
+                durationInterval = null;
+            }
+            
+            // Close Jitsi window if open
+            if (window.agentJitsiWindow && !window.agentJitsiWindow.closed) {
+                try {
+                    window.agentJitsiWindow.close();
+                } catch (e) {}
+            }
+            window.agentJitsiWindow = null;
+            
+            // Dispose Jitsi API (legacy, kept for safety)
+            if (jitsiApi) {
+                try {
+                    jitsiApi.dispose(); 
+                } catch (e) {}
+                jitsiApi = null;
+            }
+            
+            // Clear Jitsi container
+            jitsiContainer.innerHTML = '';
+            
+            // Update UI
+            callPanel.classList.remove('active');
+            waitingState.style.display = 'flex';
+            
+            // Update status
+            updateStatus('waiting', 'Waiting for calls...');
+            statusBadge.classList.remove('in-call');
+            statusBadge.classList.add('waiting');
+            
+            // Notify server
+            if (currentCall) {
+                socket.emit('agent_ended_call', {
+                    session_id: currentCall.session_id
+                });
+            }
+            
+            currentCall = null;
+            callStartTime = null;
+        }
+        
+        function updateStatus(status, text) {
+            statusText.textContent = text;
+        }
+        
+        function addToQueue(data) {
+            const emptyMsg = queueList.querySelector('.empty-queue');
+            if (emptyMsg) emptyMsg.remove();
+            
+            const time = new Date().toLocaleTimeString();
+            const item = document.createElement('div');
+            item.className = 'queue-item';
+            item.innerHTML = `
+                <span>📞</span>
+                <span>Session ${data.session_id}</span>
+                <span class="time">${time}</span>
+            `;
+            queueList.insertBefore(item, queueList.firstChild);
+            
+            // Keep only last 5
+            while (queueList.children.length > 5) {
+                queueList.removeChild(queueList.lastChild);
+            }
+        }
+    </script>
+</body>
+</html>

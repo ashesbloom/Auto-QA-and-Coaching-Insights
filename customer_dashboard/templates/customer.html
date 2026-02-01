@@ -7,6 +7,7 @@
     <title>Battery Smart - Customer Portal</title>
     <link rel="stylesheet" href="/customer/static/customer.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://meet.jit.si/external_api.js"></script>
 </head>
 
 <body>
@@ -211,6 +212,17 @@
                                     <button class="voice-control-btn end-call" onclick="endVoiceCall()">
                                         <span>📴</span>
                                         <span>End Call</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Live Agent Video Interface -->
+                            <div id="live-agent-video" class="voice-call-active hidden" style="height: 600px; padding: 0;">
+                                <div id="jitsi-meet-container" style="width: 100%; height: 100%;"></div>
+                                <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;">
+                                     <button class="voice-control-btn end-call" onclick="endVoiceCall()">
+                                        <span>📴</span>
+                                        <span>End Video Call</span>
                                     </button>
                                 </div>
                             </div>

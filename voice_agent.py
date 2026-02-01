@@ -1,11 +1,12 @@
 """
 Battery Smart Voice Agent
-AI-powered voice assistant for customer support using Gemini LLM or AWS Bedrock.
+AI-powered voice assistant for customer support using Groq LLM.
 Follows Battery Smart SOPs for consistent, professional responses.
 
 Supports:
+- Groq/Llama (primary - fast inference)
 - AWS Bedrock (Claude 3 Haiku/Nova) with streaming for low latency
-- Google Gemini as fallback for local development
+- Rule-based fallback responses
 """
 
 import os
@@ -23,7 +24,9 @@ from config import (
     BATTERY_SMART_SOPS,
     REQUIRED_SCRIPT_ELEMENTS,
     COMPLAINT_CATEGORIES,
-    SENTIMENT_KEYWORDS
+    SENTIMENT_KEYWORDS,
+    TRANSFER_TRIGGER_PHRASES,
+    TRANSFER_SCENARIOS
 )
 
 # Check for AWS Bedrock availability
@@ -37,33 +40,25 @@ try:
 except ImportError:
     USE_BEDROCK = False
 
-# Try to import Groq (fast, preferred after Bedrock)
+# Import Groq (primary LLM)
 try:
     from groq import Groq
     GROQ_AVAILABLE = True
+    print("✅ Groq SDK available")
 except ImportError:
     GROQ_AVAILABLE = False
-    print("Warning: groq not installed. Run: pip install groq")
-
-# Try to import Gemini as fallback
-try:
-    import google.generativeai as genai
-    GEMINI_AVAILABLE = True
-except ImportError:
-    GEMINI_AVAILABLE = False
-    print("Warning: google-generativeai not installed. Run: pip install google-generativeai")
+    print("❌ ERROR: groq not installed. Run: pip install groq")
 
 
 class VoiceAgent:
     """
-    Battery Smart Voice Agent powered by AWS Bedrock, Groq, or Gemini LLM.
+    Battery Smart Voice Agent powered by Groq LLM.
     Handles customer support conversations following company SOPs.
     
     Priority:
-    1. AWS Bedrock (if USE_AWS=true and USE_AWS_BEDROCK=true)
-    2. Groq/Llama (fastest, if GROQ_API_KEY is set)
-    3. Google Gemini (fallback)
-    4. Rule-based fallback responses
+    1. Groq/Llama (primary - fastest inference)
+    2. AWS Bedrock (if USE_AWS=true and USE_AWS_BEDROCK=true)
+    3. Rule-based fallback responses
     """
     
     def __init__(self, api_key: str = None, use_bedrock: bool = None):
@@ -71,10 +66,9 @@ class VoiceAgent:
         Initialize the voice agent.
         
         Args:
-            api_key: Gemini API key. If not provided, reads from GEMINI_API_KEY env var.
+            api_key: Deprecated (was for Gemini). Use GROQ_API_KEY env var.
             use_bedrock: Force Bedrock usage. If None, auto-detects based on USE_AWS env var.
         """
-        self.gemini_key = api_key or os.getenv('GEMINI_API_KEY')
         self.groq_key = os.getenv('GROQ_API_KEY')
         self.model = None
         self.chat_session = None
@@ -88,21 +82,34 @@ class VoiceAgent:
         self.use_streaming = False
         self.model_type = None  # Track which LLM is active
         
-        # Determine which LLM to use (priority: Bedrock > Groq > Gemini)
+        # Check if GROQ_API_KEY is set
+        if not self.groq_key:
+            print("\n" + "=" * 60)
+            print("❌ ERROR: GROQ_API_KEY environment variable is not set!")
+            print("=" * 60)
+            print("\nTo fix this:")
+            print("1. Get a FREE API key from: https://console.groq.com/keys")
+            print("2. Set it in your environment:")
+            print("   Windows PowerShell: $env:GROQ_API_KEY = 'your-key-here'")
+            print("   Linux/Mac: export GROQ_API_KEY='your-key-here'")
+            print("3. Or add to .env file: GROQ_API_KEY=your-key-here")
+            print("=" * 60 + "\n")
+        
+        # Determine which LLM to use (priority: Groq > Bedrock > Fallback)
         if use_bedrock is None:
             use_bedrock = USE_BEDROCK if USE_BEDROCK else False
         
-        # Priority 1: AWS Bedrock
-        if use_bedrock and USE_BEDROCK:
-            self._initialize_bedrock()
-        
-        # Priority 2: Groq (if Bedrock failed or not enabled)
-        if self.model_type is None and GROQ_AVAILABLE and self.groq_key:
+        # Priority 1: Groq (fastest)
+        if GROQ_AVAILABLE and self.groq_key:
             self._initialize_groq()
         
-        # Priority 3: Gemini (fallback)
-        if self.model_type is None and GEMINI_AVAILABLE and self.gemini_key:
-            self._initialize_gemini()
+        # Priority 2: AWS Bedrock (if Groq failed or not configured)
+        if self.model_type is None and use_bedrock and USE_BEDROCK:
+            self._initialize_bedrock()
+        
+        # If nothing worked, we'll use fallback responses
+        if self.model_type is None:
+            print("⚠️ Voice Agent: Using rule-based fallback (no LLM available)")
     
     def _initialize_bedrock(self):
         """Initialize AWS Bedrock with streaming support."""
@@ -126,22 +133,10 @@ class VoiceAgent:
         try:
             self.groq_client = Groq(api_key=self.groq_key)
             self.model_type = "groq"
-            print("Voice Agent: Using Groq/Llama (fast mode)")
+            print("✅ Voice Agent: Using Groq/Llama (fast mode)")
         except Exception as e:
-            print(f"Groq initialization failed: {e}")
+            print(f"❌ Groq initialization failed: {e}")
             self.groq_client = None
-    
-    def _initialize_gemini(self):
-        """Initialize Gemini model with Battery Smart system prompt."""
-        genai.configure(api_key=self.gemini_key)
-        
-        # Use Gemini 1.5 Flash for faster responses
-        self.model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
-            system_instruction=self._build_system_prompt()
-        )
-        self.model_type = "gemini"
-        print("Voice Agent: Using Google Gemini")
     
     def _build_system_prompt(self) -> str:
         """Build comprehensive system prompt from Battery Smart SOPs."""
@@ -196,6 +191,34 @@ class VoiceAgent:
 4. **Be helpful**: Always provide useful information.
 5. **Stay professional**: Remain calm and courteous.
 
+## TRANSFER TO HUMAN AGENT (CRITICAL)
+
+You MUST transfer the call to a human agent in these situations:
+
+**Customer explicitly requests a human:**
+- If they say words like: "talk to human", "real person", "speak to someone", "transfer me", "supervisor", "manager", "representative"
+- Respond politely and add ||TRANSFER|| at the END of your response
+
+**Situations you cannot handle (auto-transfer):**
+- Legal disputes or police cases
+- Physical injury or vehicle accidents  
+- Fraud complaints
+- Refund requests above Rs. 5,000
+- Customer has called 3+ times for same unresolved issue
+- Any situation where you're unsure or cannot help
+
+**HOW TO TRANSFER:**
+When transferring, say something helpful like:
+"I understand you'd like to speak with a human agent. Let me connect you right away. Please hold for a moment."
+Then add ||TRANSFER|| at the very end of your message (the customer won't hear this part).
+
+**Example:**
+Customer: "I want to talk to a real person"
+You: "Of course! I'll connect you to one of our customer care executives right away. Please hold for just a moment. ||TRANSFER||"
+
+Customer: "My scooter caught fire and I got injured"
+You: "I'm so sorry to hear that! Your safety is our top priority. I'm immediately connecting you to our senior support team who can help you with this urgent matter. Please stay on the line. ||TRANSFER||"
+
 ## EXAMPLE CONVERSATIONS
 
 Customer: "How much does your service cost?"
@@ -229,16 +252,14 @@ Remember: Help them first, verify only if absolutely needed for account changes!
         self.conversation_history = []  # Reset for Groq
         
         # Initialize session based on model type
-        if self.bedrock_agent:
-            self.bedrock_agent.start_session()
-        elif self.groq_client:
+        if self.groq_client:
             # Add system prompt to conversation history for Groq
             self.conversation_history.append({
                 "role": "system",
                 "content": self._build_system_prompt()
             })
-        elif self.model:
-            self.chat_session = self.model.start_chat(history=[])
+        elif self.bedrock_agent:
+            self.bedrock_agent.start_session()
         
         return self.session_id
     
@@ -264,18 +285,11 @@ Remember: Help them first, verify only if absolutely needed for account changes!
         # Add user message to transcript
         self._add_to_transcript("customer", user_message)
         
-        # Generate response using available LLM (priority: Bedrock > Groq > Gemini)
+        # Generate response using available LLM (priority: Groq > Bedrock > Fallback)
         agent_response = None
         
-        # Try Bedrock first
-        if self.bedrock_agent:
-            try:
-                agent_response = self.bedrock_agent.llm.send_message(user_message)
-            except Exception as e:
-                print(f"Bedrock error: {e}")
-        
-        # Try Groq (fast Llama inference)
-        if agent_response is None and self.groq_client:
+        # Try Groq first (fast Llama inference)
+        if self.groq_client:
             try:
                 # Add user message to history
                 self.conversation_history.append({
@@ -299,15 +313,14 @@ Remember: Help them first, verify only if absolutely needed for account changes!
                     "content": agent_response
                 })
             except Exception as e:
-                print(f"Groq error: {e}")
+                print(f"❌ Groq error: {e}")
         
-        # Try Gemini as fallback
-        if agent_response is None and self.chat_session:
+        # Try Bedrock as secondary
+        if agent_response is None and self.bedrock_agent:
             try:
-                response = self.chat_session.send_message(user_message)
-                agent_response = response.text.strip()
+                agent_response = self.bedrock_agent.llm.send_message(user_message)
             except Exception as e:
-                print(f"Gemini error: {e}")
+                print(f"❌ Bedrock error: {e}")
         
         # Use fallback if no LLM available
         if agent_response is None:
@@ -455,17 +468,17 @@ Remember: Help them first, verify only if absolutely needed for account changes!
 
 
 class VoiceSessionManager:
-    """Manages multiple voice agent sessions with AWS support."""
+    """Manages multiple voice agent sessions."""
     
     def __init__(self, api_key: str = None, use_bedrock: bool = None):
         """
         Initialize session manager.
         
         Args:
-            api_key: Gemini API key (for fallback)
+            api_key: Deprecated (was for Gemini). Use GROQ_API_KEY env var.
             use_bedrock: Force Bedrock usage. If None, auto-detects.
         """
-        self.api_key = api_key
+        self.api_key = api_key  # Kept for backward compatibility
         self.use_bedrock = use_bedrock
         self.sessions: Dict[str, VoiceAgent] = {}
         self.completed_sessions: List[Dict] = []

@@ -1,0 +1,56 @@
+{
+  "session_id": "62c7f394",
+  "agent_name": "Priya",
+  "start_time": "2026-02-01T02:54:54.571139",
+  "end_time": "2026-02-01T02:55:43.972818",
+  "duration_seconds": 49,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-02-01T02:54:54.571187"
+    },
+    {
+      "speaker": "customer",
+      "text": "Le Le Mere",
+      "timestamp": "2026-02-01T02:55:09.742873"
+    },
+    {
+      "speaker": "agent",
+      "text": "I understand you're trying to reach out, but it seems like there might be some confusion. Could you please tell me a little more about what's on your mind or how I can assist you with Battery Smart today? Is there anything else I can help you with?",
+      "timestamp": "2026-02-01T02:55:10.492405"
+    },
+    {
+      "speaker": "customer",
+      "text": "I want",
+      "timestamp": "2026-02-01T02:55:29.598710"
+    },
+    {
+      "speaker": "agent",
+      "text": "It seems like you were about to ask something. Please go ahead and complete your question, I'm here to help with any queries you have about Battery Smart, whether it's about our subscription plans, swap stations, or anything else. What's on your mind?",
+      "timestamp": "2026-02-01T02:55:30.173940"
+    },
+    {
+      "speaker": "customer",
+      "text": "I want to talk to an agent",
+      "timestamp": "2026-02-01T02:55:33.406496"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?",
+      "timestamp": "2026-02-01T02:55:33.517593"
+    },
+    {
+      "speaker": "customer",
+      "text": "I want to talk to an agent",
+      "timestamp": "2026-02-01T02:55:41.694239"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?",
+      "timestamp": "2026-02-01T02:55:41.908879"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: Le Le Mere\n\nAgent: I understand you're trying to reach out, but it seems like there might be some confusion. Could you please tell me a little more about what's on your mind or how I can assist you with Battery Smart today? Is there anything else I can help you with?\n\nCustomer: I want\n\nAgent: It seems like you were about to ask something. Please go ahead and complete your question, I'm here to help with any queries you have about Battery Smart, whether it's about our subscription plans, swap stations, or anything else. What's on your mind?\n\nCustomer: I want to talk to an agent\n\nAgent: I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?\n\nCustomer: I want to talk to an agent\n\nAgent: I'd be happy to help! We offer battery swap services for electric scooters with over 500 stations across India. What would you like to know?",
+  "llm_provider": "groq"
+}

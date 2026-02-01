@@ -119,6 +119,27 @@ body {
     animation: none;
 }
 
+/* Transferring status - pulsing blue/purple gradient */
+.status-indicator.transferring .status-dot {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    animation: transferPulse 1s infinite;
+}
+
+.status-indicator.transferring .status-text {
+    color: #60a5fa;
+}
+
+@keyframes transferPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 0.7;
+    }
+}
+
 @keyframes pulse {
 
     0%,

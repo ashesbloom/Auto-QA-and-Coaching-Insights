@@ -72,6 +72,10 @@ voice_session_manager = VoiceSessionManager(api_key=os.getenv('GEMINI_API_KEY'))
 # Active socket sessions for voice
 voice_socket_sessions = {}
 
+# Connected human agents tracking
+# Maps socket.id -> agent info (agent_id, status, etc.)
+connected_agents = {}
+
 # Transcript storage - uses S3 if AWS is configured, otherwise local files
 if AWS_AVAILABLE and is_aws_enabled():
     transcript_storage = TranscriptStorage()
@@ -914,6 +918,27 @@ def api_unread_count_legacy():
 # STATIC FILE SERVING
 # =============================================================================
 
+# =============================================================================
+# AGENT CONSOLE & VOICE DASHBOARD ROUTES
+# =============================================================================
+
+@app.route('/agent-console/')
+@app.route('/agent-console')
+def agent_console():
+    """Human agent console for handling transferred calls."""
+    return send_from_directory(os.path.join(BASE_DIR, 'agent_console'), 'index.html')
+
+@app.route('/voice-dashboard/')
+@app.route('/voice-dashboard')
+def voice_dashboard():
+    """Customer voice agent interface."""
+    return send_from_directory(os.path.join(BASE_DIR, 'voice_dashboard'), 'index.html')
+
+@app.route('/voice-dashboard/static/<path:filename>')
+def voice_dashboard_static(filename):
+    """Serve voice dashboard static files."""
+    return send_from_directory(os.path.join(BASE_DIR, 'voice_dashboard', 'static'), filename)
+
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     """Fallback static file serving."""
@@ -943,7 +968,7 @@ def handle_voice_disconnect():
     """Handle WebSocket disconnection."""
     print(f"Voice client disconnected: {request.sid}")
     
-    # End any active session
+    # End any active voice session (customer)
     if request.sid in voice_socket_sessions:
         session_id = voice_socket_sessions[request.sid].get('session_id')
         if session_id:
@@ -953,6 +978,13 @@ def handle_voice_disconnect():
             except:
                 pass
         del voice_socket_sessions[request.sid]
+    
+    # Remove from connected agents (human agent)
+    if request.sid in connected_agents:
+        agent_id = connected_agents[request.sid].get('agent_id')
+        print(f"👤 Human agent disconnected: {agent_id}")
+        del connected_agents[request.sid]
+        print(f"   Remaining agents: {len(connected_agents)}")
 
 
 @socketio.on('start_call')
@@ -1005,15 +1037,59 @@ def handle_voice_user_message(data):
         # Get agent response
         response = voice_session_manager.process_message(session_id, message)
         
-        # Send response
-        emit('agent_response', {
-            'text': response,
-            'timestamp': datetime.now().isoformat()
-        })
+        # Check for transfer marker ||TRANSFER||
+        needs_transfer = '||TRANSFER||' in response
+        transfer_reason = None
         
-        # Generate TTS if available
-        if EDGE_TTS_AVAILABLE and TTSHandler:
-            asyncio.run(send_voice_tts_audio(response))
+        if needs_transfer:
+            # Remove the transfer marker from visible response
+            clean_response = response.replace('||TRANSFER||', '').strip()
+            
+            # Determine transfer reason
+            message_lower = message.lower()
+            customer_request_phrases = ['talk to human', 'speak to human', 'human agent', 'real person', 
+                                        'talk to someone', 'speak to someone', 'transfer me', 'customer care',
+                                        'supervisor', 'manager', 'representative', 'real agent']
+            
+            if any(phrase in message_lower for phrase in customer_request_phrases):
+                transfer_reason = 'customer_request'
+            else:
+                transfer_reason = 'ai_decision'
+            
+            print(f"🔄 Transfer detected! Reason: {transfer_reason}")
+            print(f"   Session: {session_id}")
+            print(f"   Customer message was: {message}")
+            print(f"   AI response (clean): {clean_response[:100]}...")
+            
+            # Send the clean response first
+            emit('agent_response', {
+                'text': clean_response,
+                'timestamp': datetime.now().isoformat()
+            })
+            
+            # Generate TTS for the transfer message
+            if EDGE_TTS_AVAILABLE and TTSHandler:
+                asyncio.run(send_voice_tts_audio(clean_response))
+            
+            # Emit transfer event to customer
+            print(f"📤 Emitting transfer_call event to customer socket {request.sid}")
+            emit('transfer_call', {
+                'session_id': session_id,
+                'reason': transfer_reason,
+                'message': 'Connecting you to a human agent...'
+            })
+            print(f"✅ transfer_call event emitted")
+            
+        else:
+            # Normal response - no transfer needed
+            emit('agent_response', {
+                'text': response,
+                'timestamp': datetime.now().isoformat()
+            })
+            
+            # Generate TTS if available
+            if EDGE_TTS_AVAILABLE and TTSHandler:
+                asyncio.run(send_voice_tts_audio(response))
         
     except Exception as e:
         print(f"Error processing voice message: {e}")
@@ -1081,6 +1157,113 @@ def handle_end_call(data):
         import traceback
         traceback.print_exc()
         emit('error', {'message': str(e)})
+
+
+# =============================================================================
+# HUMAN AGENT SOCKET HANDLERS (for Agent Console)
+# =============================================================================
+
+@socketio.on('agent_register')
+def handle_agent_register(data):
+    """Register a human agent from the Agent Console."""
+    agent_id = data.get('agent_id', f'agent-{request.sid[:8]}')
+    
+    connected_agents[request.sid] = {
+        'agent_id': agent_id,
+        'status': 'available',
+        'connected_at': datetime.now().isoformat(),
+        'current_call': None
+    }
+    
+    print(f"👤 Human agent registered: {agent_id} (socket: {request.sid})")
+    print(f"   Total connected agents: {len(connected_agents)}")
+    
+    emit('agent_registered', {
+        'agent_id': agent_id,
+        'status': 'available',
+        'message': 'Successfully registered as support agent'
+    })
+
+
+@socketio.on('agent_transfer_room')
+def handle_agent_transfer_room(data):
+    """
+    When customer creates a Jitsi room for transfer, notify all available agents.
+    This is emitted by the customer's voice dashboard when transfer_call is triggered.
+    """
+    session_id = data.get('session_id')
+    room_name = data.get('room_name')
+    room_url = data.get('room_url')
+    reason = data.get('reason', 'ai_decision')
+    
+    print(f"\n{'='*60}")
+    print(f"📞 TRANSFER ROOM CREATED")
+    print(f"   Session: {session_id}")
+    print(f"   Room: {room_name}")
+    print(f"   URL: {room_url}")
+    print(f"   Reason: {reason}")
+    print(f"   Connected agents: {len(connected_agents)}")
+    print(f"{'='*60}\n")
+    
+    # Notify all available agents about the incoming call
+    for agent_sid, agent_info in connected_agents.items():
+        if agent_info.get('status') == 'available':
+            print(f"   📤 Notifying agent: {agent_info.get('agent_id')} (socket: {agent_sid})")
+            socketio.emit('agent_incoming_call', {
+                'session_id': session_id,
+                'room_name': room_name,
+                'room_url': room_url,
+                'reason': reason,
+                'customer_info': {
+                    'name': 'Customer',
+                    'wait_time': 0
+                },
+                'timestamp': datetime.now().isoformat()
+            }, to=agent_sid)
+            print(f"   ✅ Notification sent to agent {agent_info.get('agent_id')}")
+    
+    # If no agents available, log a warning
+    available_agents = [a for a in connected_agents.values() if a.get('status') == 'available']
+    if not available_agents:
+        print("⚠️ WARNING: No available agents to handle transfer!")
+
+
+@socketio.on('agent_joined_call')
+def handle_agent_joined_call(data):
+    """When agent joins a transferred call."""
+    session_id = data.get('session_id')
+    room_name = data.get('room_name')
+    
+    if request.sid in connected_agents:
+        connected_agents[request.sid]['status'] = 'in_call'
+        connected_agents[request.sid]['current_call'] = session_id
+        
+        agent_id = connected_agents[request.sid].get('agent_id')
+        print(f"✅ Agent {agent_id} joined call for session {session_id}")
+        
+        emit('agent_call_joined', {
+            'session_id': session_id,
+            'room_name': room_name,
+            'message': 'Successfully joined the call'
+        })
+
+
+@socketio.on('agent_ended_call')
+def handle_agent_ended_call(data):
+    """When agent ends a transferred call."""
+    session_id = data.get('session_id')
+    
+    if request.sid in connected_agents:
+        connected_agents[request.sid]['status'] = 'available'
+        connected_agents[request.sid]['current_call'] = None
+        
+        agent_id = connected_agents[request.sid].get('agent_id')
+        print(f"📴 Agent {agent_id} ended call for session {session_id}")
+        
+        emit('agent_call_ended', {
+            'session_id': session_id,
+            'message': 'Call ended successfully'
+        })
 
 
 # =============================================================================
@@ -1187,13 +1370,36 @@ def evaluate_voice_transcript(session_data: dict) -> dict:
 @app.route('/api/voice/status')
 def voice_status():
     """Get voice agent status."""
+    available_agents = [a for a in connected_agents.values() if a.get('status') == 'available']
+    in_call_agents = [a for a in connected_agents.values() if a.get('status') == 'in_call']
+    
     return jsonify({
         "status": "online",
         "aws_enabled": is_aws_enabled() if AWS_AVAILABLE else False,
         "llm_available": bool(os.getenv('GEMINI_API_KEY') or os.getenv('GROQ_API_KEY')),
         "tts_available": EDGE_TTS_AVAILABLE,
         "s3_enabled": transcript_storage.is_s3_enabled() if transcript_storage else False,
-        "active_sessions": len(voice_socket_sessions)
+        "active_sessions": len(voice_socket_sessions),
+        "connected_agents": len(connected_agents),
+        "available_agents": len(available_agents),
+        "agents_in_call": len(in_call_agents)
+    })
+
+
+@app.route('/api/voice/agents')
+def voice_agents():
+    """Get list of connected human agents."""
+    agents_list = []
+    for sid, info in connected_agents.items():
+        agents_list.append({
+            "agent_id": info.get('agent_id'),
+            "status": info.get('status'),
+            "connected_at": info.get('connected_at'),
+            "current_call": info.get('current_call')
+        })
+    return jsonify({
+        "agents": agents_list,
+        "total": len(agents_list)
     })
 
 

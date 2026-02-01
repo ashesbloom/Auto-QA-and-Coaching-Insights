@@ -1,0 +1,26 @@
+{
+  "session_id": "95e58583",
+  "agent_name": "Priya",
+  "start_time": "2026-02-01T04:45:41.866338",
+  "end_time": "2026-02-01T04:46:46.060025",
+  "duration_seconds": 64,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-02-01T04:45:41.866364"
+    },
+    {
+      "speaker": "customer",
+      "text": "I want to talk to Amazon",
+      "timestamp": "2026-02-01T04:45:54.563005"
+    },
+    {
+      "speaker": "agent",
+      "text": "I understand you'd like to speak with a human agent, but I think there might be some confusion - you've reached Battery Smart, a battery swap network for electric vehicles, not Amazon. If you're looking for Amazon support, I can try to provide you with their contact information. However, if you have any questions about Battery Smart or our services, I'm here to help. Would you like me to provide Amazon's contact details or assist you with something else? ||TRANSFER||",
+      "timestamp": "2026-02-01T04:45:55.290105"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: I want to talk to Amazon\n\nAgent: I understand you'd like to speak with a human agent, but I think there might be some confusion - you've reached Battery Smart, a battery swap network for electric vehicles, not Amazon. If you're looking for Amazon support, I can try to provide you with their contact information. However, if you have any questions about Battery Smart or our services, I'm here to help. Would you like me to provide Amazon's contact details or assist you with something else? ||TRANSFER||",
+  "llm_provider": "groq"
+}

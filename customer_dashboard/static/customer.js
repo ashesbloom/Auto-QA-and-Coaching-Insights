@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Battery Smart Customer Dashboard - JavaScript
  * Handles all client-side functionality
  */
@@ -986,6 +986,99 @@ function initVoiceCall() {
         playVoiceAudio(data.audio);
     });
 
+    voiceSocket.on('transfer_call', (data) => {
+        console.log('Transferring to live agent:', data);
+        showToast(data.message || 'Transferring to live agent...', 'info');
+        
+        // --- SEAMLESS AUDIO HANDOFF ---
+        // 1. Stop AI Speech Recognition
+        if (voiceRecognition) {
+            try { voiceRecognition.stop(); } catch(e){}
+            voiceRecognition = null;
+        }
+
+        // 2. Update Voice UI to show "Live Agent" state
+        // Don't hide the interface! Reuse it.
+        const avatar = document.getElementById('voice-avatar');
+        if (avatar) {
+            avatar.innerHTML = '<span>👤</span>'; // Change robot to human icon
+            avatar.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)'; // Blue background for human
+        }
+         const agentName = document.querySelector('.agent-details h4');
+        if (agentName) agentName.textContent = "Live Support Agent";
+
+        const agentStatus = document.querySelector('.agent-details .agent-status');
+        if (agentStatus) agentStatus.textContent = "Connecting Audio...";
+        
+        // 3. Setup Jitsi (Audio Only)
+        // We reuse the existing video container but make it tiny/hidden or overlay
+        // NOTE: We need the user to potentially approve mic, so we can't completely hide the iframe 
+        // until permissions are stable, but let's try a minimal seamless integration.
+        // We'll put it in a container that replaces the "avatar" or is just invisible if permission is already there.
+        // For now, we'll put it in the dedicated container but style it.
+
+        const videoContainer = document.getElementById('live-agent-video');
+        if (videoContainer) {
+            videoContainer.classList.remove('hidden');
+            // Hide the video element specifically via CSS or inline style to avoid big black box
+            // We want it to look like a voice call.
+            videoContainer.style.height = '0px'; 
+            videoContainer.style.overflow = 'hidden';
+            videoContainer.style.opacity = '0'; // Hide it visually but keep it in DOM
+            
+            // Generate Room URL with Audio Only Config - use alphanumeric name to avoid lobby
+            const roomName = `bsmart${data.session_id}${Date.now()}`;
+            // Build URL with all config params to skip prejoin and enable audio
+            const roomUrl = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&config.startAudioOnly=true&userInfo.displayName="Customer"`;
+            
+            console.log('🔊 Creating Jitsi room:', roomName);
+            console.log('🔗 Room URL:', roomUrl);
+
+            // Open Jitsi in a new tab (required for WebRTC on non-HTTPS pages)
+            window.jitsiWindow = window.open(roomUrl, '_blank', 'width=800,height=600');
+            
+            if (window.jitsiWindow) {
+                console.log('✅ Jitsi window opened successfully');
+                showToast('Voice call opened in new tab. Please allow microphone access.', 'info');
+                
+                if (agentStatus) agentStatus.textContent = "Call opened in new tab";
+                
+                // Check periodically if the window is closed
+                const checkWindow = setInterval(() => {
+                    if (window.jitsiWindow && window.jitsiWindow.closed) {
+                        console.log('📴 Jitsi window was closed');
+                        clearInterval(checkWindow);
+                        if (agentStatus) agentStatus.textContent = "Call ended";
+                        showToast('Voice call ended', 'info');
+                    }
+                }, 2000);
+            } else {
+                console.error('❌ Failed to open Jitsi window - popup blocked?');
+                showToast('Please allow popups to open the voice call', 'warning');
+                
+                // Show a manual link as fallback
+                const jitsiContainer = document.getElementById('jitsi-meet-container');
+                if (jitsiContainer) {
+                    jitsiContainer.innerHTML = `
+                        <div style="padding: 20px; text-align: center;">
+                            <p>Click below to join the voice call:</p>
+                            <a href="${roomUrl}" target="_blank" style="color: #10b981; font-size: 18px;">Join Call</a>
+                        </div>`;
+                }
+            }
+
+            // Notify server that room is ready so agent can join
+            console.log('📤 Emitting agent_transfer_room event...');
+            voiceSocket.emit('agent_transfer_room', {
+                room_url: roomUrl,
+                room_name: roomName,
+                session_id: data.session_id,
+                reason: data.reason
+            });
+            console.log('✅ agent_transfer_room emitted with room:', roomName);
+        }
+    });
+
     voiceSocket.on('call_ended', (data) => {
         console.log('Call ended:', data);
         cleanupVoiceCall();
@@ -1184,6 +1277,12 @@ function endVoiceCall() {
 function cleanupVoiceCall() {
     voiceCallActive = false;
 
+    // Dispose Jitsi
+    if (window.currentJitsiApi) {
+        try { window.currentJitsiApi.dispose(); } catch(e){}
+        window.currentJitsiApi = null;
+    }
+
     // Stop speech recognition
     if (voiceRecognition) {
         try { voiceRecognition.stop(); } catch (e) { }
@@ -1205,6 +1304,13 @@ function cleanupVoiceCall() {
     // Reset UI
     document.getElementById('voice-call-form').classList.remove('hidden');
     document.getElementById('voice-call-active').classList.add('hidden');
+    
+    // Cleanup Video
+    const videoContainer = document.getElementById('live-agent-video');
+    if (videoContainer) videoContainer.classList.add('hidden');
+    const jitsiContainer = document.getElementById('jitsi-meet-container');
+    if (jitsiContainer) jitsiContainer.innerHTML = '';
+
     document.getElementById('voice-timer').textContent = '00:00';
     document.getElementById('voice-mute').classList.remove('muted');
     document.getElementById('voice-mute').innerHTML = '<span>🎤</span><span>Mute</span>';

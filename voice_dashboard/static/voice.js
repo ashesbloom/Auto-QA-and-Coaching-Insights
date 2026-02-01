@@ -81,6 +81,22 @@ function initializeSocket() {
         playAudioResponse(data.audio, data.format);
     });
 
+    // =========================================================================
+    // TRANSFER CALL HANDLER: When AI decides to transfer to human agent
+    // =========================================================================
+    socket.on('transfer_call', (data) => {
+        console.log('='.repeat(60));
+        console.log('🔄 TRANSFER_CALL EVENT RECEIVED!');
+        console.log('🔄 Transfer data:', JSON.stringify(data, null, 2));
+        console.log('='.repeat(60));
+        
+        try {
+            handleCallTransfer(data);
+        } catch (error) {
+            console.error('❌ ERROR handling transfer_call:', error);
+        }
+    });
+
     socket.on('call_ended', (data) => {
         console.log('Call ended:', data);
         handleCallEnded(data);
@@ -365,6 +381,274 @@ function updateTimer() {
 function updateStatus(status, text) {
     statusIndicator.className = `status-indicator ${status}`;
     statusText.textContent = text;
+}
+
+/**
+ * Handle call transfer to human agent using Jitsi Meet
+ */
+function handleCallTransfer(data) {
+    console.log('=== TRANSFER HANDLER CALLED ===');
+    console.log('Handling call transfer:', data);
+    
+    try {
+        // Generate unique room name - avoid dashes and special chars to prevent lobby mode
+        const roomName = `bsmart${data.session_id}${Date.now()}`;
+        const jitsiUrl = `https://meet.jit.si/${roomName}`;
+        console.log('Generated Jitsi URL:', jitsiUrl);
+        
+        // Update status to show transfer in progress
+        updateStatus('transferring', 'Connecting to human agent...');
+        
+        // Add transfer notice to transcript
+        const transcriptEl = document.getElementById('transcript');
+        if (transcriptEl) {
+            const transferNotice = document.createElement('div');
+            transferNotice.className = 'transcript-entry transfer-notice';
+            transferNotice.innerHTML = `
+                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border-radius: 12px; margin: 16px 0;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">🔄</div>
+                    <div style="color: #60a5fa; font-weight: 600; font-size: 15px;">Connecting to Human Agent</div>
+                    <div style="color: var(--gray); font-size: 13px; margin-top: 4px;">
+                        ${data.reason === 'customer_request' ? 'As per your request' : 'For better assistance'}
+                    </div>
+                </div>
+            `;
+            transcriptEl.appendChild(transferNotice);
+            transcriptEl.scrollTop = transcriptEl.scrollHeight;
+        }
+        
+        console.log('About to call showJitsiTransferModal...');
+        // Show transfer modal with Jitsi room
+        showJitsiTransferModal(data, roomName, jitsiUrl);
+        console.log('showJitsiTransferModal completed');
+    } catch (error) {
+        console.error('❌ ERROR in handleCallTransfer:', error);
+    }
+}
+
+/**
+ * Show transfer modal with Jitsi Meet room
+ */
+function showJitsiTransferModal(data, roomName, jitsiUrl) {
+    console.log('=== showJitsiTransferModal STARTED ===');
+    
+    // FIRST: Send room link to server for agent notification (before creating iframe)
+    console.log('🔍 Socket check - socket exists:', !!socket);
+    console.log('🔍 Socket check - socket.connected:', socket ? socket.connected : 'N/A');
+    console.log('🔍 Socket check - socket.id:', socket ? socket.id : 'N/A');
+    
+    try {
+        if (socket && socket.connected) {
+            const transferData = {
+                session_id: data.session_id,
+                room_name: roomName,
+                room_url: jitsiUrl,
+                reason: data.reason
+            };
+            console.log('📤 Emitting agent_transfer_room with data:', JSON.stringify(transferData));
+            
+            socket.emit('agent_transfer_room', transferData);
+            console.log('✅ agent_transfer_room event emitted successfully');
+        } else {
+            console.error('❌ Socket not connected! Attempting reconnect...');
+            if (socket) {
+                socket.connect();
+                // Use a small delay and emit
+                setTimeout(() => {
+                    if (socket.connected) {
+                        console.log('🔄 Reconnected, sending agent_transfer_room...');
+                        socket.emit('agent_transfer_room', {
+                            session_id: data.session_id,
+                            room_name: roomName,
+                            room_url: jitsiUrl,
+                            reason: data.reason
+                        });
+                    }
+                }, 500);
+            }
+        }
+    } catch (emitError) {
+        console.error('❌ Error emitting agent_transfer_room:', emitError);
+    }
+    
+    // Log for agent to see
+    console.log('='.repeat(60));
+    console.log('🔔 AGENT JOIN LINK:', jitsiUrl);
+    console.log('='.repeat(60));
+    
+    // Open Jitsi in a new tab (required for WebRTC on non-HTTPS pages)
+    window.customerJitsiWindow = window.open(jitsiUrl + '#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&userInfo.displayName="Customer"', '_blank', 'width=800,height=600');
+    
+    if (window.customerJitsiWindow) {
+        console.log('✅ Customer Jitsi window opened successfully');
+        
+        // Update status
+        updateStatus('in-call', 'Voice call opened in new tab');
+        
+        // Show notification in transcript
+        const transcriptEl = document.getElementById('transcript');
+        if (transcriptEl) {
+            const callNotice = document.createElement('div');
+            callNotice.className = 'transcript-entry transfer-notice';
+            callNotice.innerHTML = `
+                <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1)); border-radius: 12px; margin: 16px 0;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">📞</div>
+                    <div style="color: #10b981; font-weight: 600; font-size: 15px;">Voice Call Opened in New Tab</div>
+                    <div style="color: var(--gray); font-size: 13px; margin-top: 4px;">
+                        Allow microphone access in the new window to speak with the agent.
+                    </div>
+                </div>
+            `;
+            transcriptEl.appendChild(callNotice);
+            transcriptEl.scrollTop = transcriptEl.scrollHeight;
+        }
+        
+        // Check periodically if the window is closed
+        const checkWindow = setInterval(() => {
+            if (window.customerJitsiWindow && window.customerJitsiWindow.closed) {
+                console.log('📴 Customer Jitsi window was closed');
+                clearInterval(checkWindow);
+                updateStatus('connected', 'Call ended');
+            }
+        }, 2000);
+    } else {
+        console.error('❌ Failed to open Jitsi window - popup blocked?');
+        // Show fallback modal with link
+        showJitsiFallbackModal(jitsiUrl);
+    }
+}
+
+/**
+ * Show fallback modal when popup is blocked
+ */
+function showJitsiFallbackModal(jitsiUrl) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('transfer-modal');
+    if (existingModal) existingModal.remove();
+    
+    const modal = document.createElement('div');
+    modal.id = 'transfer-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.95);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    `;
+    
+    modal.innerHTML = `
+        <div style="text-align: center; padding: 40px; background: rgba(30, 41, 59, 0.9); border-radius: 16px; max-width: 500px;">
+            <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
+            <h3 style="color: #fbbf24; margin-bottom: 12px;">Popup Blocked</h3>
+            <p style="color: #94a3b8; margin-bottom: 20px;">Please allow popups or click below to join the call:</p>
+            <a href="${jitsiUrl}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&userInfo.displayName=Customer" 
+               target="_blank" 
+               style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #10b981, #059669); color: white; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 16px;">
+               Join Voice Call
+            </a>
+            <button onclick="document.getElementById('transfer-modal').remove()" 
+                    style="display: block; margin: 20px auto 0; padding: 10px 20px; background: transparent; border: 1px solid #64748b; color: #64748b; border-radius: 8px; cursor: pointer;">
+                Close
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    console.log('✅ Fallback modal displayed');
+}
+ * Copy room link to clipboard
+ */
+function copyRoomLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        // Show success feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        btn.style.background = '#10b981';
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = '';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        // Fallback: select the text
+        const linkEl = document.getElementById('room-link');
+        if (linkEl) {
+            const range = document.createRange();
+            range.selectNode(linkEl);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+        }
+    });
+}
+
+/**
+ * End the transfer call
+ */
+function endTransferCall() {
+    // Close Jitsi window if open
+    if (window.customerJitsiWindow && !window.customerJitsiWindow.closed) {
+        try {
+            window.customerJitsiWindow.close();
+        } catch (e) {}
+    }
+    window.customerJitsiWindow = null;
+    
+    // Remove fallback modal if present
+    const modal = document.getElementById('transfer-modal');
+    if (modal) modal.remove();
+    
+    updateStatus('connected', 'Call ended');
+    
+    const endNotice = document.createElement('div');
+    endNotice.className = 'transcript-entry';
+    endNotice.innerHTML = `
+        <div style="text-align: center; padding: 16px; background: rgba(100, 116, 139, 0.1); border-radius: 12px; margin: 16px 0;">
+            <span style="font-size: 24px;">📞</span>
+            <div style="color: var(--gray); font-weight: 600; margin-top: 8px;">Call with human agent ended</div>
+        </div>
+    `;
+    transcript.appendChild(endNotice);
+    transcript.scrollTop = transcript.scrollHeight;
+}
+
+/**
+ * Cancel the transfer and return to AI
+ */
+function cancelTransfer() {
+    const modal = document.getElementById('transfer-modal');
+    if (modal) modal.remove();
+    
+    updateStatus('speaking', 'Connected to AI Agent');
+    addTranscriptEntry('system', 'Transfer cancelled. Continuing with AI agent.');
+}
+
+/**
+ * Simulate transfer completion (for demo)
+ */
+function simulateTransferComplete() {
+    const modal = document.getElementById('transfer-modal');
+    if (modal) modal.remove();
+    
+    updateStatus('speaking', 'Connected to Human Agent');
+    
+    const connectedNotice = document.createElement('div');
+    connectedNotice.className = 'transcript-entry';
+    connectedNotice.innerHTML = `
+        <div style="text-align: center; padding: 16px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; margin: 16px 0; border: 1px solid rgba(16, 185, 129, 0.3);">
+            <span style="font-size: 24px;">✅</span>
+            <div style="color: #10b981; font-weight: 600; margin-top: 8px;">Connected to Human Agent</div>
+            <div style="color: var(--gray); font-size: 12px; margin-top: 4px;">You are now speaking with a customer care executive</div>
+        </div>
+    `;
+    transcript.appendChild(connectedNotice);
+    transcript.scrollTop = transcript.scrollHeight;
 }
 
 /**

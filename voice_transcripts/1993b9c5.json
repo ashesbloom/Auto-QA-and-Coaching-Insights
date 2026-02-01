@@ -1,0 +1,26 @@
+{
+  "session_id": "1993b9c5",
+  "agent_name": "Priya",
+  "start_time": "2026-02-01T04:46:53.334496",
+  "end_time": "2026-02-01T04:47:45.726234",
+  "duration_seconds": 52,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-02-01T04:46:53.334518"
+    },
+    {
+      "speaker": "customer",
+      "text": "connect me to an agent",
+      "timestamp": "2026-02-01T04:47:05.658150"
+    },
+    {
+      "speaker": "agent",
+      "text": "I understand you'd like to speak with a human agent. Let me connect you right away. Please hold for a moment. ||TRANSFER||",
+      "timestamp": "2026-02-01T04:47:06.013758"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: connect me to an agent\n\nAgent: I understand you'd like to speak with a human agent. Let me connect you right away. Please hold for a moment. ||TRANSFER||",
+  "llm_provider": "groq"
+}

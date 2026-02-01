@@ -1,0 +1,36 @@
+{
+  "session_id": "70531c84",
+  "agent_name": "Priya",
+  "start_time": "2026-02-01T04:08:59.516367",
+  "end_time": "2026-02-01T04:10:00.668762",
+  "duration_seconds": 61,
+  "transcript": [
+    {
+      "speaker": "agent",
+      "text": "Thank you for calling Battery Smart! My name is Priya. How may I help you today?",
+      "timestamp": "2026-02-01T04:08:59.516398"
+    },
+    {
+      "speaker": "customer",
+      "text": "I want to talk to an agent",
+      "timestamp": "2026-02-01T04:09:11.566082"
+    },
+    {
+      "speaker": "agent",
+      "text": "I understand you'd like to speak with a human agent. Let me connect you right away. Please hold for a moment. ||TRANSFER||",
+      "timestamp": "2026-02-01T04:09:12.066921"
+    },
+    {
+      "speaker": "customer",
+      "text": "hello hello",
+      "timestamp": "2026-02-01T04:09:45.479238"
+    },
+    {
+      "speaker": "agent",
+      "text": "I'm here to help. It seems like we got a bit disconnected. You wanted to speak with a human agent, right? I'm going to go ahead and transfer the call. Please hold for just a moment. ||TRANSFER||",
+      "timestamp": "2026-02-01T04:09:45.947190"
+    }
+  ],
+  "formatted_transcript": "Agent: Thank you for calling Battery Smart! My name is Priya. How may I help you today?\n\nCustomer: I want to talk to an agent\n\nAgent: I understand you'd like to speak with a human agent. Let me connect you right away. Please hold for a moment. ||TRANSFER||\n\nCustomer: hello hello\n\nAgent: I'm here to help. It seems like we got a bit disconnected. You wanted to speak with a human agent, right? I'm going to go ahead and transfer the call. Please hold for just a moment. ||TRANSFER||",
+  "llm_provider": "groq"
+}
